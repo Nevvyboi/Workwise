@@ -1,0 +1,11 @@
+<resources>
+    <color name="colorPrimary">#2563EB</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorSecondary">#0EA5E9</color>
+    <color name="colorBackground">#F6F8FC</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorText">#0F172A</color>
+    <color name="colorHint">#6B7280</color>
+    <color name="colorDivider">#E5E7EB</color>
+    <color name="buttonDisabled">#B9D0FF</color>
+</resources>

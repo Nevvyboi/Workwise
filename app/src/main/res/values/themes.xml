@@ -1,0 +1,21 @@
+<resources>
+    <style name="Theme.WorkWiseSA" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+        <item name="android:navigationBarColor">@color/colorPrimary</item>
+
+        <!-- Material 3 text fields default -->
+        <item name="textInputStyle">@style/Widget.WorkWise.TextInputLayout</item>
+    </style>
+
+    <!-- Rounded OutlinedBox text inputs -->
+    <style name="Widget.WorkWise.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">@color/colorSurface</item>
+        <item name="boxCornerRadiusTopStart">14dp</item>
+        <item name="boxCornerRadiusTopEnd">14dp</item>
+        <item name="boxCornerRadiusBottomStart">14dp</item>
+        <item name="boxCornerRadiusBottomEnd">14dp</item>
+    </style>
+</resources>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing -->
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_sm">8dp</dimen>
+    <dimen name="space_md">16dp</dimen>
+    <dimen name="space_lg">24dp</dimen>
+    <dimen name="space_xl">32dp</dimen>
+
+    <!-- Page padding -->
+    <dimen name="page_padding">16dp</dimen>
+
+    <!-- Card dimensions -->
+    <dimen name="card_radius">16dp</dimen>
+    <dimen name="card_elevation">4dp</dimen>
+    <dimen name="card_max_width">600dp</dimen>
+
+    <!-- Button dimensions -->
+    <dimen name="btn_height">48dp</dimen>
+    <dimen name="btn_height_lg">56dp</dimen>
+    <dimen name="btn_radius">8dp</dimen>
+    <dimen name="btn_radius_lg">12dp</dimen>
+
+    <!-- Text sizes -->
+    <dimen name="text_display">28sp</dimen>
+    <dimen name="text_title">24sp</dimen>
+    <dimen name="text_subtitle">16sp</dimen>
+    <dimen name="text_body">14sp</dimen>
+    <dimen name="text_button">16sp</dimen>
+    <dimen name="text_button_lg">18sp</dimen>
+    <dimen name="text_input">16sp</dimen>
+
+    <!-- Background -->
+    <dimen name="bg_alpha">0.3</dimen>
+
+    <!-- Illustration -->
+    <dimen name="illustration_max_h">200dp</dimen>
+</resources>
