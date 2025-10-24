@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed gets the strongest tint -->
+    <item android:state_pressed="true" android:color="#332A7DFF"/>  <!-- 20% alpha of your blue -->
+
+    <!-- Focused (keyboard/TV) -->
+    <item android:state_focused="true" android:color="#262A7DFF"/>  <!-- ~15% -->
+
+    <!-- Hovered (mouse/trackpad) -->
+    <item android:state_hovered="true" android:color="#1A2A7DFF"/>  <!-- ~10% -->
+
+    <!-- Default (idle) -->
+    <item android:color="#0D2A7DFF"/>                               <!-- ~5% -->
+</selector>

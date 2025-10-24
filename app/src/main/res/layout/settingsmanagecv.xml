@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F9FC"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Back Button -->
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="@color/colorPrimary"
+            tools:ignore="ContentDescription" />
+
+        <!-- Page Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Manage CV"
+            android:textColor="@color/colorPrimary"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- CV Status Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvStatusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:backgroundTint="#FFFFFF"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:gravity="center">
+
+                <!-- CV Icon -->
+                <ImageView
+                    android:id="@+id/cvIcon"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginBottom="16dp"
+                    android:src="@android:drawable/ic_menu_edit"
+                    app:tint="@color/colorPrimary"
+                    tools:ignore="ContentDescription" />
+
+                <!-- CV Status Text -->
+                <TextView
+                    android:id="@+id/cvStatusText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No CV uploaded"
+                    android:textColor="#6D7A88"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- CV File Name -->
+                <TextView
+                    android:id="@+id/cvFileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="#1A1A1A"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- CV Upload Date -->
+                <TextView
+                    android:id="@+id/cvUploadDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="#6D7A88"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Upload CV Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/uploadCvButton"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:text="Upload CV (PDF)"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:icon="@android:drawable/ic_menu_upload"
+            app:iconGravity="textStart"
+            app:cornerRadius="16dp"
+            android:backgroundTint="@color/colorPrimary" />
+
+        <!-- View CV Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/viewCvButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:text="View CV"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:icon="@android:drawable/ic_menu_view"
+            app:iconGravity="textStart"
+            app:cornerRadius="16dp"
+            app:strokeColor="@color/colorPrimary"
+            android:textColor="@color/colorPrimary"
+            tools:visibility="visible" />
+
+        <!-- Download CV Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/downloadCvButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:text="Download CV"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:icon="@android:drawable/stat_sys_download"
+            app:iconGravity="textStart"
+            app:cornerRadius="16dp"
+            app:strokeColor="@color/colorPrimary"
+            android:textColor="@color/colorPrimary"
+            tools:visibility="visible" />
+
+        <!-- Remove CV Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/removeCvButton"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="24dp"
+            android:text="Remove CV"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:icon="@android:drawable/ic_menu_delete"
+            app:iconGravity="textStart"
+            app:cornerRadius="16dp"
+            android:backgroundTint="#EF5350"
+            tools:visibility="visible" />
+
+        <!-- Info Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="80dp"
+            android:backgroundTint="#E3F2FD"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📄 CV Guidelines"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• Upload PDF format only\n• Maximum file size: 5MB\n• Keep your CV updated\n• Include contact information"
+                    android:textColor="#1A1A1A"
+                    android:textSize="13sp"
+                    android:lineSpacingExtra="4dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</ScrollView>
