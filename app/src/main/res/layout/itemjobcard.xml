@@ -42,7 +42,6 @@
                 tools:ignore="ContentDescription" />
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Job Info Container -->
         <LinearLayout
             android:id="@+id/jobInfoLayout"
             android:layout_width="0dp"
@@ -55,7 +54,6 @@
             app:layout_constraintEnd_toStartOf="@id/bookmarkButton"
             app:layout_constraintBottom_toBottomOf="@id/logoCard">
 
-            <!-- Job Title -->
             <TextView
                 android:id="@+id/tv_job_title"
                 android:layout_width="wrap_content"
@@ -68,7 +66,6 @@
                 android:ellipsize="end"
                 tools:text="Senior Software Engineer" />
 
-            <!-- Company Name -->
             <TextView
                 android:id="@+id/tv_company_name"
                 android:layout_width="wrap_content"
@@ -82,7 +79,6 @@
                 tools:text="WorkWise Technologies" />
         </LinearLayout>
 
-        <!-- Bookmark Button -->
         <ImageView
             android:id="@+id/bookmarkButton"
             android:layout_width="40dp"
@@ -97,7 +93,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             tools:ignore="ContentDescription" />
 
-        <!-- Details Row -->
         <LinearLayout
             android:id="@+id/detailsRow"
             android:layout_width="0dp"
@@ -108,7 +103,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- Location Badge -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -145,7 +139,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Distance Badge -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -182,7 +175,6 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- Job Type & Salary Row -->
         <LinearLayout
             android:id="@+id/jobTypeRow"
             android:layout_width="0dp"
@@ -194,7 +186,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- Job Type Chip -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -216,7 +207,6 @@
                     tools:text="Full-Time" />
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Salary -->
             <TextView
                 android:id="@+id/tv_salary"
                 android:layout_width="0dp"
@@ -230,7 +220,6 @@
                 android:ellipsize="end"
                 tools:text="R15,000 - R25,000" />
 
-            <!-- Posted Time -->
             <TextView
                 android:id="@+id/tv_posted_time"
                 android:layout_width="wrap_content"
@@ -241,7 +230,6 @@
                 tools:text="2h ago" />
         </LinearLayout>
 
-        <!-- Divider (optional) -->
         <View
             android:id="@+id/divider"
             android:layout_width="0dp"
@@ -252,7 +240,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -287,7 +274,5 @@
                 android:backgroundTint="@color/colorPrimary"
                 app:cornerRadius="12dp" />
         </LinearLayout>
-
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </com.google.android.material.card.MaterialCardView>

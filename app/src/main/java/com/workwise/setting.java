@@ -2,14 +2,27 @@ package com.workwise;
 
 import com.workwise.ui.bottomNav;
 import com.workwise.settings.*;
+import com.workwise.models.cvItem;
+import com.workwise.network.apiClient;
+import com.workwise.network.apiConfig;
+import com.workwise.network.apiService;
+
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class setting extends bottomNav {
 
@@ -19,6 +32,8 @@ public class setting extends bottomNav {
     private TextView profileBio;
     private TextView applicationsCount;
     private TextView savedJobsCount;
+    private TextView cvBadgeText;
+    private MaterialCardView cvBadge;
 
     private MaterialCardView manageProfileCard;
     private MaterialCardView manageCvCard;
@@ -26,14 +41,25 @@ public class setting extends bottomNav {
     private MaterialCardView viewSavedJobsCard;
     private MaterialButton signOutButton;
 
+    private apiService api;
+    private int userId = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings);
 
+        // Initialize API
+        api = apiClient.get().create(apiService.class);
+
+        // Get user ID
+        SharedPreferences prefs = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
+        userId = prefs.getInt("user_id", -1);
+
         initializeViews();
         setupClickListeners();
         loadUserData();
+        checkCVStatus();
     }
 
     @Override
@@ -51,6 +77,10 @@ public class setting extends bottomNav {
         // Stats
         applicationsCount = findViewById(R.id.applicationsCount);
         savedJobsCount = findViewById(R.id.savedJobsCount);
+
+        // CV Badge
+        cvBadge = findViewById(R.id.cvBadge);
+        cvBadgeText = findViewById(R.id.cvBadgeText);
 
         // Menu cards
         manageProfileCard = findViewById(R.id.manageProfileCard);
@@ -94,20 +124,68 @@ public class setting extends bottomNav {
             });
         }
 
-        // Sign Out
         if (signOutButton != null) {
             signOutButton.setOnClickListener(v -> handleSignOut());
         }
     }
 
     private void loadUserData() {
-        // TODO: Load actual user data from SharedPreferences, Database, or API
-        if (profileName != null) profileName.setText("panayioti economou");
-        if (profileEmail != null) profileEmail.setText("pano@workwise.za");
-        if (profileBio != null) profileBio.setText("hi I'm pano a software engineer");
+        SharedPreferences prefs = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
+
+        String userName = prefs.getString("user_name", "User Name");
+        String userEmail = prefs.getString("user_email", "user@workwise.za");
+        String userBio = prefs.getString("user_bio", "Bio...");
+
+        if (profileName != null) profileName.setText(userName);
+        if (profileEmail != null) profileEmail.setText(userEmail);
+        if (profileBio != null) profileBio.setText(userBio);
 
         if (applicationsCount != null) applicationsCount.setText("24");
         if (savedJobsCount != null) savedJobsCount.setText("4");
+    }
+
+    private void checkCVStatus() {
+        if (userId == -1 || cvBadge == null || cvBadgeText == null) {
+            updateCVBadge(false);
+            return;
+        }
+
+        Call<List<cvItem>> call = api.getCVs(userId, apiConfig.tokenCvList);
+
+        call.enqueue(new Callback<List<cvItem>>() {
+            @Override
+            public void onResponse(Call<List<cvItem>> call, Response<List<cvItem>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<cvItem> cvs = response.body();
+                    updateCVBadge(!cvs.isEmpty());
+                } else {
+                    updateCVBadge(false);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<cvItem>> call, Throwable t) {
+                updateCVBadge(false);
+            }
+        });
+    }
+
+    private void updateCVBadge(boolean hasCv) {
+        runOnUiThread(() -> {
+            if (cvBadge != null && cvBadgeText != null) {
+                cvBadge.setVisibility(View.VISIBLE);
+
+                if (hasCv) {
+                    cvBadgeText.setText("CV: ✓");
+                    cvBadge.setCardBackgroundColor(getResources().getColor(android.R.color.white));
+                    cvBadgeText.setTextColor(getResources().getColor(R.color.colorPrimary));
+                } else {
+                    cvBadgeText.setText("CV: ✗");
+                    cvBadge.setCardBackgroundColor(getResources().getColor(android.R.color.white));
+                    cvBadgeText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                }
+            }
+        });
     }
 
     private void handleSignOut() {
@@ -120,16 +198,14 @@ public class setting extends bottomNav {
     }
 
     private void performSignOut() {
-        // TODO: Clear user session
-        // Clear SharedPreferences
-        // getSharedPreferences("UserPrefs", MODE_PRIVATE)
-        //     .edit()
-        //     .clear()
-        //     .apply();
+        getSharedPreferences("WorkWisePrefs", MODE_PRIVATE)
+                .edit()
+                .clear()
+                .apply();
 
         Toast.makeText(this, "Signed out successfully", Toast.LENGTH_SHORT).show();
 
-        // Navigate to login screen
+
         Intent intent = new Intent(this, authentication.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
@@ -140,5 +216,6 @@ public class setting extends bottomNav {
     protected void onResume() {
         super.onResume();
         loadUserData();
+        checkCVStatus();
     }
 }

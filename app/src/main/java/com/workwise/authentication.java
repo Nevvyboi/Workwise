@@ -1,12 +1,10 @@
 package com.workwise;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.Patterns;
 import android.view.View;
-import android.widget.ImageView; // Import ImageView
-import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,12 +31,22 @@ import retrofit2.Response;
 
 public class authentication extends AppCompatActivity {
 
+    // SharedPreferences
+    private static final String PREFS_NAME = "WorkWisePrefs";
+    private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_USER_NAME = "user_name";
+    private static final String KEY_USER_EMAIL = "user_email";
+
+    // UI
     private MaterialButtonToggleGroup modeToggle;
     private View loginOptionsRow;
     private MaterialButton primaryAction;
     private TextInputLayout confirmPasswordLayout;
-    private TextInputEditText inputEmail, inputPassword, inputConfirmPassword;
+    private TextInputEditText inputEmail;
+    private TextInputEditText inputPassword;
+    private TextInputEditText inputConfirmPassword;
 
+    // API
     private apiService api;
 
     @Override
@@ -47,8 +55,10 @@ public class authentication extends AppCompatActivity {
         setContentView(R.layout.authentication);
 
         api = apiClient.get().create(apiService.class);
+
         bindViews();
 
+        // default = login
         modeToggle.check(R.id.btnLogin);
         applyAuthMode(false);
 
@@ -60,7 +70,11 @@ public class authentication extends AppCompatActivity {
 
         primaryAction.setOnClickListener(v -> {
             boolean signUp = (modeToggle.getCheckedButtonId() == R.id.btnSignUp);
-            if (signUp) doSignUp(); else doLogin();
+            if (signUp) {
+                doSignUp();
+            } else {
+                doLogin();
+            }
         });
     }
 
@@ -71,7 +85,7 @@ public class authentication extends AppCompatActivity {
         inputEmail = findViewById(R.id.inputEmail);
         inputPassword = findViewById(R.id.inputPassword);
         confirmPasswordLayout = findViewById(R.id.confirmPasswordLayout);
-        inputConfirmPassword  = findViewById(R.id.inputConfirmPassword);
+        inputConfirmPassword = findViewById(R.id.inputConfirmPassword);
     }
 
     private void applyAuthMode(boolean signUp) {
@@ -79,250 +93,188 @@ public class authentication extends AppCompatActivity {
             confirmPasswordLayout.setVisibility(signUp ? View.VISIBLE : View.GONE);
             confirmPasswordLayout.setError(null);
         }
+
         if (loginOptionsRow != null) {
             loginOptionsRow.setVisibility(signUp ? View.GONE : View.VISIBLE);
         }
-        primaryAction.setText(signUp ? R.string.signUp : R.string.login);
+
+        if (primaryAction != null) {
+            primaryAction.setText(signUp ? R.string.signUp : R.string.login);
+        }
 
         if (inputEmail != null) inputEmail.setError(null);
         if (inputPassword != null) inputPassword.setError(null);
         if (inputConfirmPassword != null) inputConfirmPassword.setError(null);
     }
 
+    // ---------- SharedPreferences helpers ----------
 
+    private void saveUserSession(int userId, String username, String email) {
+        if (userId <= 0) return;
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(KEY_USER_ID, userId);
+        editor.putString(KEY_USER_NAME, username);
+        editor.putString(KEY_USER_EMAIL, email);
+        editor.apply();
+    }
+
+    // ---------- Sign Up ----------
 
     private void doSignUp() {
-        String email = inputEmail.getText() == null ? "" : inputEmail.getText().toString().trim();
-        String password = inputPassword.getText() == null ? "" : inputPassword.getText().toString();
-        System.out.println(password);
-        String confirm  = inputConfirmPassword.getText() == null ? "" : inputConfirmPassword.getText().toString();
+        String email = text(inputEmail);
+        String password = text(inputPassword);
+        String confirm = text(inputConfirmPassword);
 
         if (!isValidEmail(email)) {
-            showDialog("Invalid email", "Please enter a valid email address.", null, null, null);
+            showDialog("Invalid email", "Please enter a valid email address.");
             return;
         }
         if (!isStrongPassword(password)) {
-            showDialog("Weak password", "Password must be at least 8 characters.", null, null, null);
+            showDialog("Weak password", "Password must be at least 8 characters.");
             return;
         }
-        if (confirmPasswordLayout.getVisibility() == View.VISIBLE && !password.equals(confirm)) {
-            showDialog("Passwords don’t match", "Please re-enter your password.", null, null, null);
+        if (!password.equals(confirm)) {
+            showDialog("Passwords don't match", "Please re-enter your password.");
             return;
         }
 
         setLoading(true);
-        String username = deriveUsernameFromEmail(email);
 
+        String username = deriveUsernameFromEmail(email);
         registerIn body = new registerIn(username, email, password);
 
         api.register(body, apiConfig.tokenRegister, "application/json")
                 .enqueue(new Callback<registerOut>() {
-                    @Override public void onResponse(Call<registerOut> call, Response<registerOut> res) {
+                    @Override
+                    public void onResponse(Call<registerOut> call, Response<registerOut> res) {
                         setLoading(false);
                         if (res.isSuccessful() && res.body() != null) {
-                            setLoading(false);
-                            try {
-                                Intent intent = new Intent(authentication.this, home.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
-                                finish();
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                                new androidx.appcompat.app.AlertDialog.Builder(authentication.this)
-                                        .setTitle("Launch error")
-                                        .setMessage(ex.getClass().getSimpleName() + ": " + String.valueOf(ex.getMessage()))
-                                        .setPositiveButton("OK", null)
-                                        .show();
-                            }
+                            registerOut data = res.body();
+                            saveUserSession(data.userId, data.username, data.email);
+                            navigateToHome();
                         } else {
                             handleHttpError(res);
                         }
                     }
-                    @Override public void onFailure(Call<registerOut> call, Throwable t) {
+
+                    @Override
+                    public void onFailure(Call<registerOut> call, Throwable t) {
                         setLoading(false);
-                        showDialog("Network error", t.getMessage(), null, null, null);
+                        showDialog("Network error", t.getMessage());
                     }
                 });
     }
 
+    // ---------- Login ----------
+
     private void doLogin() {
-        String email = text(inputEmail);
+        String usernameOrEmail = text(inputEmail);
         String password = text(inputPassword);
 
-
-        if (!isValidEmail(email)) {
-            showDialog("Invalid email", "Please enter a valid email address.", null, null, null);
+        if (usernameOrEmail.isEmpty()) {
+            showDialog("Login required", "Please enter your email or username.");
             return;
         }
         if (password.isEmpty()) {
-            showDialog("Password required", "Please enter your password.", null, null, null);
+            showDialog("Password required", "Please enter your password.");
             return;
         }
 
         setLoading(true);
-        loginIn body = new loginIn(email, password);
 
-        api.login(body, apiConfig.tokenLogin, "application/json").enqueue(new Callback<loginOut>() {
-            @Override public void onResponse(Call<loginOut> call, Response<loginOut> res) {
-                setLoading(false);
-                if (res.isSuccessful() && res.body() != null) {
-                    setLoading(false);
-                    try {
-                        Intent intent = new Intent(authentication.this, home.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        finish();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        new androidx.appcompat.app.AlertDialog.Builder(authentication.this)
-                                .setTitle("Launch error")
-                                .setMessage(ex.getClass().getSimpleName() + ": " + String.valueOf(ex.getMessage()))
-                                .setPositiveButton("OK", null)
-                                .show();
-                    }
-                } else {
-                    handleHttpError(res);
-                }
-            }
-            @Override public void onFailure(Call<loginOut> call, Throwable t) {
-                setLoading(false);
-                showDialog("Network error", t.getMessage(), null, null, null);
-            }
-        });
-    }
+        loginIn body = new loginIn(usernameOrEmail, password);
 
-    private void showDialog(String title,
-                            String message,
-                            @Nullable DialogOptions options,
-                            @Nullable java.util.function.Consumer<String> onPositive,
-                            @Nullable Runnable onNegative) {
-
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
-                .setTitle(title)
-                .setMessage(message == null ? "" : message);
-
-        TextInputLayout til = null;
-        TextInputEditText et = null;
-
-        if (options != null && options.withInput) {
-
-            til = new TextInputLayout(this, null, com.google.android.material.R.style.Widget_Material3_TextInputLayout_FilledBox_Dense);
-            til.setHint("Enter value");
-            til.setEndIconMode(TextInputLayout.END_ICON_PASSWORD_TOGGLE);
-
-            et = new TextInputEditText(til.getContext());
-            et.setInputType(options.inputType != null ? options.inputType : (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
-            et.setHint("Type here");
-
-            til.addView(et, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-            LinearLayout container = new LinearLayout(this);
-            container.setOrientation(LinearLayout.VERTICAL);
-            int pad = (int) (16 * getResources().getDisplayMetrics().density);
-            container.setPadding(pad, pad, pad, 0);
-            container.addView(til);
-
-            builder.setView(container);
-        }
-
-        String positive = options != null && options.positiveText != null ? options.positiveText : "OK";
-        String negative = options != null && options.negativeText != null ? options.negativeText : null;
-
-        builder.setPositiveButton(positive, null);
-        if (negative != null) {
-            builder.setNegativeButton(negative, (d, w) -> {
-                d.dismiss();
-                if (onNegative != null) onNegative.run();
-            });
-        }
-
-        final androidx.appcompat.app.AlertDialog dialog = builder.create();
-        TextInputLayout finalTil = til;
-        TextInputEditText finalEt = et;
-
-        dialog.setOnShowListener(d -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
-                .setOnClickListener(v -> {
-                    String value = "";
-                    if (finalEt != null) value = finalEt.getText() == null ? "" : finalEt.getText().toString();
-
-                    if (options != null && options.withInput) {
-                        if (value.isEmpty()) {
-                            if (finalTil != null) finalTil.setError("This field is required");
-                            return;
+        api.login(body, apiConfig.tokenLogin, "application/json")
+                .enqueue(new Callback<loginOut>() {
+                    @Override
+                    public void onResponse(Call<loginOut> call, Response<loginOut> res) {
+                        setLoading(false);
+                        if (res.isSuccessful() && res.body() != null) {
+                            loginOut data = res.body();
+                            saveUserSession(data.userId, data.username, data.email);
+                            navigateToHome();
+                        } else {
+                            handleHttpError(res);
                         }
-                        if (finalTil != null) finalTil.setError(null);
                     }
 
-                    dialog.dismiss();
-                    if (onPositive != null) onPositive.accept(value);
-                }));
-        dialog.show();
+                    @Override
+                    public void onFailure(Call<loginOut> call, Throwable t) {
+                        setLoading(false);
+                        showDialog("Network error", t.getMessage());
+                    }
+                });
     }
 
-    private static class DialogOptions {
-        final boolean withInput;
-        final String positiveText;
-        final String negativeText;
-        final Integer inputType;
+    // ---------- Utils ----------
 
-        DialogOptions(boolean withInput, String positiveText, String negativeText, Integer inputType) {
-            this.withInput = withInput;
-            this.positiveText = positiveText;
-            this.negativeText = negativeText;
-            this.inputType = inputType;
+    private void navigateToHome() {
+        Intent intent = new Intent(authentication.this, home.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void setLoading(boolean loading) {
+        if (primaryAction != null) {
+            primaryAction.setEnabled(!loading);
+            primaryAction.setAlpha(loading ? 0.6f : 1f);
         }
     }
 
+    private String text(TextInputEditText et) {
+        return (et == null || et.getText() == null)
+                ? ""
+                : et.getText().toString().trim();
+    }
 
     private boolean isValidEmail(String email) {
         return email != null && Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
     private boolean isStrongPassword(String password) {
-        return password != null && password.length() >= 8 && password.length() <= 128;
-    }
-
-    private void setLoading(boolean loading) {
-        primaryAction.setEnabled(!loading);
-        primaryAction.setAlpha(loading ? 0.6f : 1f);
-    }
-
-    private String text(TextInputEditText t) {
-        return t == null || t.getText() == null ? "" : t.getText().toString().trim();
+        return password != null && password.length() >= 8;
     }
 
     private String deriveUsernameFromEmail(String email) {
+        if (email == null) return "";
         int at = email.indexOf('@');
-        if (at > 0) return email.substring(0, at);
-        return email.replaceAll("[^a-zA-Z0-9]", "_");
+        return (at > 0) ? email.substring(0, at) : email.replaceAll("[^a-zA-Z0-9]", "_");
     }
 
-    private boolean looksLikeHtml(String s) {
-        if (s == null) return false;
-        String t = s.trim().toLowerCase();
-        return t.startsWith("<!doctype html") || t.startsWith("<html") || t.contains("<body");
+    private void showDialog(String title, String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setMessage(message == null ? "" : message)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private void handleHttpError(Response<?> response) {
-        String errorMessage = "An unknown error occurred.";
-        if (response.errorBody() != null) {
-            try {
-                errorMessage = response.errorBody().string();
+        String errorMessage = "Unexpected error";
 
-                JsonElement element = JsonParser.parseString(errorMessage);
-                if (element.isJsonObject()) {
-                    JsonObject obj = element.getAsJsonObject();
-                    if (obj.has("message")) {
-                        errorMessage = obj.get("message").getAsString();
-                    } else if (obj.has("detail")) {
-                        errorMessage = obj.get("detail").getAsString();
+        try {
+            if (response.errorBody() != null) {
+                String raw = response.errorBody().string();
+                if (raw != null && !raw.isEmpty()) {
+                    JsonElement element = JsonParser.parseString(raw);
+                    if (element.isJsonObject()) {
+                        JsonObject obj = element.getAsJsonObject();
+                        if (obj.has("message")) {
+                            errorMessage = obj.get("message").getAsString();
+                        } else if (obj.has("detail")) {
+                            errorMessage = obj.get("detail").getAsString();
+                        }
+                    } else {
+                        errorMessage = raw;
                     }
                 }
-            } catch (Exception e) {
-                // Ignore parsing errors, use raw response
             }
+        } catch (Exception ignored) {
         }
-        showDialog("Error " + response.code(), errorMessage, null, null, null);
+
+        showDialog("Error " + response.code(), errorMessage);
     }
 }

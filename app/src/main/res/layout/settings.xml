@@ -57,30 +57,36 @@
 
                 <TextView
                     android:id="@+id/profileName"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="panayioti economou"
                     android:textColor="#FFFFFF"
                     android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
 
                 <TextView
                     android:id="@+id/profileEmail"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="pano@workwise.za"
                     android:textColor="#E0E0E0"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
 
                 <TextView
                     android:id="@+id/profileBio"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:text="hi I'm pano a software engineer"
                     android:textColor="#FFFFFF"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -95,9 +101,10 @@
                 app:layout_constraintStart_toStartOf="parent">
 
                 <TextView
+                    android:id="@+id/cvBadgeText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="CV: Added"
+                    android:text="CV: ✓"
                     android:textColor="@color/colorPrimary"
                     android:textSize="12sp"
                     android:textStyle="bold"
@@ -224,8 +231,6 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:padding="18dp"
-                    android:clickable="true"
-                    android:focusable="true"
                     android:background="?attr/selectableItemBackground">
 
                     <ImageView
@@ -270,8 +275,6 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:padding="18dp"
-                    android:clickable="true"
-                    android:focusable="true"
                     android:background="?attr/selectableItemBackground">
 
                     <ImageView
@@ -316,8 +319,6 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:padding="18dp"
-                    android:clickable="true"
-                    android:focusable="true"
                     android:background="?attr/selectableItemBackground">
 
                     <ImageView
@@ -362,8 +363,6 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:padding="18dp"
-                    android:clickable="true"
-                    android:focusable="true"
                     android:background="?attr/selectableItemBackground">
 
                     <ImageView
