@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/backgroundgradient">
 
-    <!-- Content Frame - Where child activity layouts will be injected -->
+    <!-- Content goes here -->
     <FrameLayout
         android:id="@+id/contentFrame"
         android:layout_width="0dp"
@@ -17,46 +17,45 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Bottom Navigation Bar (Shared across all activities) -->
+    <!-- Bottom Navigation Bar -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/bottomNavCard"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="16dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
         android:backgroundTint="#FFFFFF"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="12dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="horizontal"
-            android:paddingVertical="12dp"
-            android:paddingHorizontal="12dp"
-            android:gravity="center">
+            android:gravity="center"
+            android:paddingHorizontal="8dp">
 
-            <!-- Home Button -->
+            <!-- Home -->
             <LinearLayout
                 android:id="@+id/navHome"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:padding="8dp"
+                android:paddingVertical="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
                     android:id="@+id/homeIcon"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:src="@drawable/baselinehome24"
                     app:tint="@color/colorPrimary"
                     tools:ignore="ContentDescription" />
@@ -65,104 +64,104 @@
                     android:id="@+id/homeText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
                     android:text="Home"
                     android:textColor="@color/colorPrimary"
-                    android:textSize="11sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Near Me Button -->
+            <!-- Near Me -->
             <LinearLayout
                 android:id="@+id/navNearMe"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:padding="8dp"
+                android:paddingVertical="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
                     android:id="@+id/nearMeIcon"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:src="@drawable/outlinelocation24"
-                    app:tint="#6D7A88"
+                    app:tint="#9AA5B5"
                     tools:ignore="ContentDescription" />
 
                 <TextView
                     android:id="@+id/nearMeText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
                     android:text="Near Me"
-                    android:textColor="#6D7A88"
-                    android:textSize="11sp" />
+                    android:textColor="#9AA5B5"
+                    android:textSize="9sp" />
             </LinearLayout>
 
-            <!-- Community Button -->
+            <!-- Community -->
             <LinearLayout
                 android:id="@+id/navCommunity"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:padding="8dp"
+                android:paddingVertical="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
                     android:id="@+id/communityIcon"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:src="@drawable/outlinepeople24"
-                    app:tint="#6D7A88"
+                    app:tint="#9AA5B5"
                     tools:ignore="ContentDescription" />
 
                 <TextView
                     android:id="@+id/communityText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
                     android:text="Community"
-                    android:textColor="#6D7A88"
-                    android:textSize="11sp" />
+                    android:textColor="#9AA5B5"
+                    android:textSize="9sp" />
             </LinearLayout>
 
-            <!-- Settings Button -->
+            <!-- Settings -->
             <LinearLayout
                 android:id="@+id/navSettings"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:padding="8dp"
+                android:paddingVertical="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
                     android:id="@+id/settingsIcon"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:src="@drawable/outlinesettings24"
-                    app:tint="#6D7A88"
+                    app:tint="#9AA5B5"
                     tools:ignore="ContentDescription" />
 
                 <TextView
                     android:id="@+id/settingsText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
                     android:text="Settings"
-                    android:textColor="#6D7A88"
-                    android:textSize="11sp" />
+                    android:textColor="#9AA5B5"
+                    android:textSize="10sp" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
