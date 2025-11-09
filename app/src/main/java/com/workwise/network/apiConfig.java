@@ -30,7 +30,7 @@ public final class apiConfig {
     public static final String tokenStats = "STATSTOK789";
 
     // Saved Jobs tokens
-    public static final String tokenSavedList = "SAVEDLISTTOK012";
+    public static final String tokenJobsList = "JOBLISTTOK111";
     public static final String tokenSavedAdd = "SAVEDADDTOK345";
     public static final String tokenSavedDelete = "SAVEDDELETETOK678";
 

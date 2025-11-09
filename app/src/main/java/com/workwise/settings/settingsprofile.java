@@ -291,34 +291,76 @@ public class settingsprofile extends AppCompatActivity {
             }
 
             // Load profile image - handle null
+            android.util.Log.d("PROFILE_IMAGE", "========== Loading Profile Image ==========");
             if (profile.profileImage != null && !profile.profileImage.isEmpty()) {
                 currentProfileImagePath = profile.profileImage;
+                android.util.Log.d("PROFILE_IMAGE", "Image path from API: " + profile.profileImage);
 
                 // Construct full image URL
                 String imageUrl = profile.profileImage;
                 if (!imageUrl.startsWith("http")) {
+                    android.util.Log.d("PROFILE_IMAGE", "Original path: " + imageUrl);
+
                     // Replace backslashes with forward slashes
                     imageUrl = imageUrl.replace("\\", "/");
+                    android.util.Log.d("PROFILE_IMAGE", "After backslash fix: " + imageUrl);
+
                     // Remove leading slash if present
                     if (imageUrl.startsWith("/")) {
                         imageUrl = imageUrl.substring(1);
+                        android.util.Log.d("PROFILE_IMAGE", "After leading slash removal: " + imageUrl);
                     }
+
                     // Remove trailing slash from base URL if present
                     String baseUrl = apiConfig.baseUrl;
                     if (baseUrl.endsWith("/")) {
                         baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                     }
+
                     imageUrl = baseUrl + "/" + imageUrl;
+                    android.util.Log.d("PROFILE_IMAGE", "Base URL: " + baseUrl);
                 }
+
+                final String finalImageUrl = imageUrl;
+                android.util.Log.d("PROFILE_IMAGE", "Final image URL: " + finalImageUrl);
 
                 Glide.with(this)
                         .load(imageUrl)
                         .placeholder(R.drawable.outlineaccountscircle24)
                         .error(R.drawable.outlineaccountscircle24)
                         .circleCrop()
+                        .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@androidx.annotation.Nullable com.bumptech.glide.load.engine.GlideException e,
+                                                        Object model,
+                                                        com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target,
+                                                        boolean isFirstResource) {
+                                android.util.Log.e("PROFILE_IMAGE", "========== IMAGE LOAD FAILED ==========");
+                                android.util.Log.e("PROFILE_IMAGE", "URL: " + finalImageUrl);
+                                if (e != null) {
+                                    android.util.Log.e("PROFILE_IMAGE", "Error: " + e.getMessage());
+                                    android.util.Log.e("PROFILE_IMAGE", "Root causes: " + e.getRootCauses());
+                                    e.printStackTrace();
+                                }
+                                return false;
+                            }
+
+                            @Override
+                            public boolean onResourceReady(android.graphics.drawable.Drawable resource,
+                                                           Object model,
+                                                           com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target,
+                                                           com.bumptech.glide.load.DataSource dataSource,
+                                                           boolean isFirstResource) {
+                                android.util.Log.d("PROFILE_IMAGE", "========== IMAGE LOADED SUCCESSFULLY ==========");
+                                android.util.Log.d("PROFILE_IMAGE", "URL: " + finalImageUrl);
+                                android.util.Log.d("PROFILE_IMAGE", "Data source: " + dataSource);
+                                return false;
+                            }
+                        })
                         .into(profileImagePreview);
             } else {
                 // No profile image, show default
+                android.util.Log.d("PROFILE_IMAGE", "No profile image found, using default");
                 profileImagePreview.setImageResource(R.drawable.outlineaccountscircle24);
             }
         });
@@ -331,6 +373,13 @@ public class settingsprofile extends AppCompatActivity {
         editor.putString("user_name", profile.profileName != null ? profile.profileName : "");
         editor.putString("user_email", profile.email != null ? profile.email : "");
         editor.putString("user_bio", profile.profileBio != null ? profile.profileBio : "");
+        editor.putString("user_profile_image", profile.profileImage != null ? profile.profileImage : "");
+
+        android.util.Log.d("PROFILE_CACHE", "Saved to SharedPreferences:");
+        android.util.Log.d("PROFILE_CACHE", "  Name: " + (profile.profileName != null ? profile.profileName : ""));
+        android.util.Log.d("PROFILE_CACHE", "  Email: " + (profile.email != null ? profile.email : ""));
+        android.util.Log.d("PROFILE_CACHE", "  Bio: " + (profile.profileBio != null ? profile.profileBio : ""));
+        android.util.Log.d("PROFILE_CACHE", "  Image: " + (profile.profileImage != null ? profile.profileImage : ""));
 
         editor.apply();
     }
