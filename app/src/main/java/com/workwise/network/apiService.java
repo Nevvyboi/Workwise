@@ -86,30 +86,44 @@ public interface apiService {
 
     // ========== SAVED JOBS ==========
     @GET("v1/workwise/saved-jobs/{user_id}")
-    Call<List<savedJob>> getSavedJobs(@Path("user_id") int userId,
-                                      @Header("X-Endpoint-Token") String endpointToken);
+    Call<List<savedJobs>> getSavedJobs(@Path("user_id") int userId,
+                                       @Header("X-Endpoint-Token") String endpointToken);
 
     @POST("v1/workwise/saved-jobs/{user_id}")
-    Call<savedJob> addSavedJob(@Path("user_id") int userId,
-                               @Body savedJobInput job,
-                               @Header("X-Endpoint-Token") String endpointToken);
+    Call<savedJobs> addSavedJob(@Path("user_id") int userId,
+                                @Body savedJobInput job,
+                                @Header("X-Endpoint-Token") String endpointToken);
 
     @DELETE("v1/workwise/saved-jobs/{user_id}/{saved_job_id}")
     Call<apiResponse> deleteSavedJob(@Path("user_id") int userId,
                                      @Path("saved_job_id") int savedJobId,
                                      @Header("X-Endpoint-Token") String endpointToken);
 
-    // Get random jobs list
+    // ========== JOBS ==========
     @GET("/v1/workwise/jobs")
     Call<List<job>> getJobs(
             @Header("X-Endpoint-Token") String endpointToken,
             @Query("limit") int limit
     );
 
-    // Get a single job by ID
     @GET("/v1/workwise/jobs/{job_id}")
     Call<job> getJobById(
             @Header("X-Endpoint-Token") String endpointToken,
             @Path("job_id") int jobId
     );
+
+    @POST("v1/workwise/forgot-password")
+    Call<forgotPasswordOut> forgotPassword(@Body forgotPasswordIn body,
+                                           @Header("X-Endpoint-Token") String endpointToken,
+                                           @Header("Accept") String accept);
+
+    @POST("v1/workwise/verify-reset-code")
+    Call<verifyResetCodeOut> verifyResetCode(@Body verifyResetCodeIn body,
+                                             @Header("X-Endpoint-Token") String endpointToken,
+                                             @Header("Accept") String accept);
+
+    @POST("v1/workwise/reset-password")
+    Call<resetPasswordOut> resetPassword(@Body resetPasswordIn body,
+                                         @Header("X-Endpoint-Token") String endpointToken,
+                                         @Header("Accept") String accept);
 }

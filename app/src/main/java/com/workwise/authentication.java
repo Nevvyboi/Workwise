@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.workwise.email.forgotPassword;
 import com.workwise.models.loginIn;
 import com.workwise.models.loginOut;
 import com.workwise.models.registerIn;
@@ -49,6 +51,8 @@ public class authentication extends AppCompatActivity {
     // API
     private apiService api;
 
+    private TextView forgotPasswordLink;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +80,13 @@ public class authentication extends AppCompatActivity {
                 doLogin();
             }
         });
+
+        if (forgotPasswordLink != null) {
+            forgotPasswordLink.setOnClickListener(v -> {
+                Intent intent = new Intent(authentication.this, forgotPassword.class);
+                startActivity(intent);
+            });
+        }
     }
 
     private void bindViews() {
@@ -86,6 +97,7 @@ public class authentication extends AppCompatActivity {
         inputPassword = findViewById(R.id.inputPassword);
         confirmPasswordLayout = findViewById(R.id.confirmPasswordLayout);
         inputConfirmPassword = findViewById(R.id.inputConfirmPassword);
+        forgotPasswordLink = findViewById(R.id.forgotPassword);
     }
 
     private void applyAuthMode(boolean signUp) {

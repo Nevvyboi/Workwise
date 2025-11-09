@@ -29,10 +29,17 @@ public final class apiConfig {
     // Stats token
     public static final String tokenStats = "STATSTOK789";
 
-    // Saved Jobs tokens
+    // Jobs tokens
     public static final String tokenJobsList = "JOBLISTTOK111";
+
+    // Saved Jobs tokens
+    public static final String tokenSavedList = "SAVEDLISTTOK012";
     public static final String tokenSavedAdd = "SAVEDADDTOK345";
     public static final String tokenSavedDelete = "SAVEDDELETETOK678";
+
+    public static final String tokenForgotPassword = "FORGOTPWDTOK123";
+    public static final String tokenVerifyResetCode = "VERIFYCODETOK456";
+    public static final String tokenResetPassword = "RESETPWDTOK789";
 
     private apiConfig() {}
 }
