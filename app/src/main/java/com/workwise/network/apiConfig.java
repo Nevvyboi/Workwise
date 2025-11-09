@@ -29,10 +29,17 @@ public final class apiConfig {
     // Stats token
     public static final String tokenStats = "REDACTED-ENDPOINT-TOKEN";
 
-    // Saved Jobs tokens
+    // Jobs tokens
     public static final String tokenJobsList = "REDACTED-ENDPOINT-TOKEN";
+
+    // Saved Jobs tokens
+    public static final String tokenSavedList = "REDACTED-ENDPOINT-TOKEN";
     public static final String tokenSavedAdd = "REDACTED-ENDPOINT-TOKEN";
     public static final String tokenSavedDelete = "REDACTED-ENDPOINT-TOKEN";
+
+    public static final String tokenForgotPassword = "REDACTED-ENDPOINT-TOKEN";
+    public static final String tokenVerifyResetCode = "REDACTED-ENDPOINT-TOKEN";
+    public static final String tokenResetPassword = "REDACTED-ENDPOINT-TOKEN";
 
     private apiConfig() {}
 }

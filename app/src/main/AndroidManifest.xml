@@ -68,6 +68,10 @@
             android:label="PDF Viewer"
             android:theme="@style/Theme.WorkWiseSA"
             android:exported="false" />
+        
+        <activity android:name=".email.forgotPassword"/>
+        <activity android:name=".email.resetPassword"/>
+        <activity android:name=".email.verifyResetCode"/>
     </application>
 
 </manifest>

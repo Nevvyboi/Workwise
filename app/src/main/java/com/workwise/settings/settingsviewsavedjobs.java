@@ -16,10 +16,10 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.workwise.R;
 import com.workwise.models.savedJobs;
+import com.workwise.models.apiResponse;
 import com.workwise.network.apiClient;
 import com.workwise.network.apiConfig;
 import com.workwise.network.apiService;
-import com.workwise.model.apiResponse;
 
 import java.util.List;
 
@@ -127,7 +127,7 @@ public class settingsviewsavedjobs extends AppCompatActivity {
     private View createJobCard(savedJobs job) {
         LayoutInflater inflater = LayoutInflater.from(this);
         MaterialCardView cardView = (MaterialCardView) inflater.inflate(
-                R.layout.item_saved_job, savedJobsContainer, false);
+                R.layout.itemsavedjob, savedJobsContainer, false);
 
         // Get views from card
         TextView tvJobTitle = cardView.findViewById(R.id.tv_saved_job_title);
