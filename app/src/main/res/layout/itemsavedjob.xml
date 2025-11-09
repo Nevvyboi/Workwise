@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:backgroundTint="#FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="3dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <!-- Job Title -->
+        <TextView
+            android:id="@+id/tv_saved_job_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Senior Software Developer"
+            android:textColor="#1A1A1A"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"
+            tools:text="Senior Software Developer" />
+
+        <!-- Company Name -->
+        <TextView
+            android:id="@+id/tv_saved_company_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TechCorp Solutions"
+            android:textColor="@color/colorPrimary"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"
+            tools:text="TechCorp Solutions" />
+
+        <!-- Location Info -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="4dp"
+                android:src="@android:drawable/ic_menu_mylocation"
+                app:tint="#6D7A88"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/tv_saved_location_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Johannesburg, ZA"
+                android:textColor="#6D7A88"
+                android:textSize="13sp"
+                tools:text="Johannesburg, ZA" />
+        </LinearLayout>
+
+        <!-- Salary -->
+        <TextView
+            android:id="@+id/tv_saved_salary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="R35 000 - R50 000"
+            android:textColor="#1A1A1A"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"
+            tools:text="R35 000 - R50 000" />
+
+        <!-- Saved Date -->
+        <TextView
+            android:id="@+id/tv_saved_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Saved: 09/11/2025"
+            android:textColor="#9E9E9E"
+            android:textSize="12sp"
+            android:layout_marginBottom="12dp"
+            tools:text="Saved: 09/11/2025" />
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_view_saved_job"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="View Details"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:backgroundTint="@color/colorPrimary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_remove_saved_job"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Remove"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:strokeColor="#EF5350"
+                android:textColor="#EF5350" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
