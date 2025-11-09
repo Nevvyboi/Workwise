@@ -8,7 +8,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
+import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 
 import com.workwise.R;
@@ -17,7 +17,7 @@ import com.workwise.home;
 import com.workwise.setting;
 import com.workwise.nearme;
 
-public abstract class bottomNav extends AppCompatActivity {
+public abstract class bottomNav extends baseNetworkCheck {
 
     private FrameLayout contentFrame;
     private String currentNavItem = "home";
@@ -54,7 +54,7 @@ public abstract class bottomNav extends AppCompatActivity {
         }
 
         if (navNearMe != null) {
-            navNearMe.setOnClickListener(v -> navigateToPage("nearme", nearme.class));;
+            navNearMe.setOnClickListener(v -> navigateToPage("nearme", nearme.class));
         }
 
         if (navCommunity != null) {
@@ -148,5 +148,18 @@ public abstract class bottomNav extends AppCompatActivity {
                 }
                 break;
         }
+    }
+
+    @Override
+    protected void onNetworkRestored() {
+        super.onNetworkRestored();
+        // Show a toast when network is restored
+        Toast.makeText(this, "✓ Connected", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onNetworkLost() {
+        super.onNetworkLost();
+        // Optionally handle network loss in activities
     }
 }

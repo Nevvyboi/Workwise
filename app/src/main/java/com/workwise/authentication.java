@@ -6,9 +6,9 @@ import android.os.Bundle;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
@@ -26,12 +26,13 @@ import com.workwise.models.registerOut;
 import com.workwise.network.apiClient;
 import com.workwise.network.apiConfig;
 import com.workwise.network.apiService;
+import com.workwise.ui.baseNetworkCheck;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class authentication extends AppCompatActivity {
+public class authentication extends baseNetworkCheck {
 
     // SharedPreferences
     private static final String PREFS_NAME = "WorkWisePrefs";
@@ -73,6 +74,11 @@ public class authentication extends AppCompatActivity {
         });
 
         primaryAction.setOnClickListener(v -> {
+            if (!isNetworkAvailable()) {
+                Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             boolean signUp = (modeToggle.getCheckedButtonId() == R.id.btnSignUp);
             if (signUp) {
                 doSignUp();
@@ -87,6 +93,18 @@ public class authentication extends AppCompatActivity {
                 startActivity(intent);
             });
         }
+    }
+
+    @Override
+    protected void onNetworkRestored() {
+        super.onNetworkRestored();
+        Toast.makeText(this, "✓ Back Online", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onNetworkLost() {
+        super.onNetworkLost();
+        // Network overlay will show automatically
     }
 
     private void bindViews() {
@@ -119,8 +137,6 @@ public class authentication extends AppCompatActivity {
         if (inputConfirmPassword != null) inputConfirmPassword.setError(null);
     }
 
-    // ---------- SharedPreferences helpers ----------
-
     private void saveUserSession(int userId, String username, String email) {
         if (userId <= 0) return;
 
@@ -131,8 +147,6 @@ public class authentication extends AppCompatActivity {
         editor.putString(KEY_USER_EMAIL, email);
         editor.apply();
     }
-
-    // ---------- Sign Up ----------
 
     private void doSignUp() {
         String email = text(inputEmail);
@@ -179,8 +193,6 @@ public class authentication extends AppCompatActivity {
                 });
     }
 
-    // ---------- Login ----------
-
     private void doLogin() {
         String usernameOrEmail = text(inputEmail);
         String password = text(inputPassword);
@@ -219,8 +231,6 @@ public class authentication extends AppCompatActivity {
                     }
                 });
     }
-
-    // ---------- Utils ----------
 
     private void navigateToHome() {
         Intent intent = new Intent(authentication.this, home.class);
