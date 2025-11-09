@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:background="@drawable/backgroundgradient">
 
-    <!-- Animated Background -->
     <com.workwise.ui.backgroundView
         android:id="@+id/animatedBackground"
         android:layout_width="0dp"
@@ -18,7 +17,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Screen Title -->
     <TextView
         android:id="@+id/screenTitle"
         android:layout_width="wrap_content"
@@ -31,7 +29,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Scrollable Content Area -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll"
         android:layout_width="0dp"
@@ -50,7 +47,6 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp">
 
-            <!-- Main Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card"
                 android:layout_width="0dp"
@@ -75,7 +71,6 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <!-- App Title -->
                     <TextView
                         android:id="@+id/appTitle"
                         android:layout_width="wrap_content"
@@ -86,7 +81,6 @@
                         android:textSize="24sp"
                         android:layout_gravity="center_horizontal" />
 
-                    <!-- Tagline -->
                     <TextView
                         android:id="@+id/tagline"
                         android:layout_width="wrap_content"
@@ -98,7 +92,6 @@
                         android:textSize="13sp"
                         android:layout_gravity="center_horizontal" />
 
-                    <!-- Mode Toggle -->
                     <com.google.android.material.button.MaterialButtonToggleGroup
                         android:id="@+id/modeToggle"
                         android:layout_width="match_parent"
@@ -135,7 +128,6 @@
                             app:strokeColor="@color/togglestroketint" />
                     </com.google.android.material.button.MaterialButtonToggleGroup>
 
-                    <!-- Email Input -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/emailLayout"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -160,7 +152,6 @@
                             android:paddingVertical="12dp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Password Input -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/passwordLayout"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -186,7 +177,6 @@
                             android:paddingVertical="12dp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Confirm Password Input (Hidden by default) -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/confirmPasswordLayout"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -214,7 +204,6 @@
                             android:paddingVertical="14dp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Login Options Row -->
                     <LinearLayout
                         android:id="@+id/loginOptionsRow"
                         android:layout_width="match_parent"
@@ -242,7 +231,6 @@
                             android:padding="4dp" />
                     </LinearLayout>
 
-                    <!-- Primary Action Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/primaryAction"
                         style="@style/Widget.Material3.Button"
@@ -256,7 +244,6 @@
                         app:cornerRadius="12dp"
                         app:backgroundTint="@color/colorPrimary" />
 
-                    <!-- Support Text -->
                     <TextView
                         android:id="@+id/supportText"
                         android:layout_width="match_parent"
@@ -268,7 +255,6 @@
                         android:lineSpacingExtra="2dp"
                         android:layout_marginBottom="12dp" />
 
-                    <!-- Bottom Illustration inside Card -->
                     <ImageView
                         android:id="@+id/cardIllustration"
                         android:layout_width="match_parent"
