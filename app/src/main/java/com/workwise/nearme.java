@@ -1,15 +1,20 @@
 package com.workwise;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,6 +27,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.workwise.jobs.jobapt;
@@ -65,6 +71,17 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
     private static final int JOB_LIMIT = 30;
     private static final int LOCATION_PERMISSION_REQUEST = 1001;
 
+    // Loading and permission states
+    private View loadingOverlay;
+    private View pulseCircle;
+    private View permissionPrompt;
+    private MaterialButton allowLocationButton;
+    private MaterialButton continueWithoutButton;
+    private ObjectAnimator pulseAnimator;
+    private boolean isMapReady = false;
+    private boolean areJobsLoaded = false;
+    private boolean permissionGranted = false;
+
     @Override
     protected String getCurrentNavItem() {
         return "nearme";
@@ -80,11 +97,12 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         geocoder = new Geocoder(this, Locale.getDefault());
 
         initViews();
-        setupMap();
         setupRecycler();
         setupFilters();
-        requestLocationPermission();
-        loadJobsFromApi();
+
+        // ALWAYS show permission prompt first
+        // Permission prompt is already visible in XML, just setup buttons
+        setupPermissionPrompt();
     }
 
     // ================== INIT ==================
@@ -97,18 +115,14 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         chipContract = findViewById(R.id.chipContract);
         chipRemote = findViewById(R.id.chipRemote);
         rvJobs = findViewById(R.id.rvJobs);
-    }
-
-    private void setupMap() {
-        SupportMapFragment mapFragment =
-                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
+        loadingOverlay = findViewById(R.id.loadingOverlay);
+        pulseCircle = findViewById(R.id.pulseCircle);
+        permissionPrompt = findViewById(R.id.permissionPrompt);
+        allowLocationButton = findViewById(R.id.allowLocationButton);
+        continueWithoutButton = findViewById(R.id.continueWithoutButton);
     }
 
     private void setupRecycler() {
-        // IMPORTANT: Pass context to adapter for bookmark functionality
         jobsAdapter = new jobapt(visibleJobs, jobDistances, this);
         rvJobs.setLayoutManager(new LinearLayoutManager(this));
         rvJobs.setAdapter(jobsAdapter);
@@ -140,16 +154,72 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         });
     }
 
-    // ================== LOCATION PERMISSION ==================
+    // ================== PERMISSION HANDLING ==================
+
+    private boolean checkLocationPermission() {
+        return ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void setupPermissionPrompt() {
+        if (allowLocationButton != null) {
+            allowLocationButton.setOnClickListener(v -> {
+                // Check if already has permission
+                if (checkLocationPermission()) {
+                    // Already granted - just proceed
+                    Toast.makeText(this, "Location access already enabled", Toast.LENGTH_SHORT).show();
+                    hidePermissionPrompt();
+                    startLoading();
+                } else {
+                    // Need to request permission
+                    requestLocationPermission();
+                }
+            });
+        }
+
+        if (continueWithoutButton != null) {
+            continueWithoutButton.setOnClickListener(v -> {
+                hidePermissionPrompt();
+                startLoadingWithoutLocation();
+            });
+        }
+    }
+
+    private void hidePermissionPrompt() {
+        if (permissionPrompt != null) {
+            permissionPrompt.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction(() -> {
+                        if (permissionPrompt != null) {
+                            permissionPrompt.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+        }
+    }
 
     private void requestLocationPermission() {
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)) {
+            // Show explanation dialog
+            new AlertDialog.Builder(this)
+                    .setTitle("Location Permission Needed")
+                    .setMessage("WorkWise needs your location to show jobs near you and calculate distances. This helps you find the closest opportunities.")
+                    .setPositiveButton("Grant Permission", (dialog, which) -> {
+                        ActivityCompat.requestPermissions(this,
+                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                LOCATION_PERMISSION_REQUEST);
+                    })
+                    .setNegativeButton("Not Now", (dialog, which) -> {
+                        hidePermissionPrompt();
+                        startLoadingWithoutLocation();
+                    })
+                    .show();
+        } else {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     LOCATION_PERMISSION_REQUEST);
-        } else {
-            getUserLocation();
         }
     }
 
@@ -159,16 +229,108 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getUserLocation();
+                permissionGranted = true;
+                Toast.makeText(this, "✓ Location access enabled", Toast.LENGTH_SHORT).show();
+                hidePermissionPrompt();
+                startLoading();
             } else {
-                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Location permission denied. Showing all jobs without distance info.",
+                        Toast.LENGTH_LONG).show();
+                hidePermissionPrompt();
+                startLoadingWithoutLocation();
             }
+        }
+    }
+
+    // ================== LOADING INITIALIZATION ==================
+
+    private void startLoading() {
+        showLoading();
+        setupMap();
+        getUserLocation();
+        loadJobsFromApi();
+    }
+
+    private void startLoadingWithoutLocation() {
+        showLoading();
+        setupMap();
+        loadJobsFromApi();
+        // Don't get user location
+    }
+
+    private void setupMap() {
+        // Add map fragment programmatically to avoid loading before permission prompt
+        SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.mapContainer, mapFragment)
+                .commit();
+        mapFragment.getMapAsync(this);
+    }
+
+    // ================== LOADING STATE ==================
+
+    private void showLoading() {
+        if (loadingOverlay != null) {
+            loadingOverlay.setVisibility(View.VISIBLE);
+            startPulseAnimation();
+        }
+    }
+
+    private void hideLoading() {
+        if (loadingOverlay != null) {
+            stopPulseAnimation();
+            loadingOverlay.animate()
+                    .alpha(0f)
+                    .setDuration(400)
+                    .withEndAction(() -> {
+                        if (loadingOverlay != null) {
+                            loadingOverlay.setVisibility(View.GONE);
+                            loadingOverlay.setAlpha(1f);
+                        }
+                    })
+                    .start();
+        }
+    }
+
+    private void startPulseAnimation() {
+        if (pulseCircle != null) {
+            pulseAnimator = ObjectAnimator.ofFloat(pulseCircle, "scaleX", 1f, 1.3f, 1f);
+            pulseAnimator.setDuration(1500);
+            pulseAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+            pulseAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(pulseCircle, "scaleY", 1f, 1.3f, 1f);
+            scaleY.setDuration(1500);
+            scaleY.setRepeatCount(ObjectAnimator.INFINITE);
+            scaleY.setInterpolator(new AccelerateDecelerateInterpolator());
+
+            pulseAnimator.start();
+            scaleY.start();
+        }
+    }
+
+    private void stopPulseAnimation() {
+        if (pulseAnimator != null) {
+            pulseAnimator.cancel();
+            pulseAnimator = null;
+        }
+    }
+
+    private void checkAndHideLoading() {
+        // Hide loading when both map and jobs are ready
+        if (isMapReady && areJobsLoaded) {
+            hideLoading();
         }
     }
 
     // ================== GET USER LOCATION ==================
 
     private void getUserLocation() {
+        if (!checkLocationPermission()) {
+            return;
+        }
+
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -198,7 +360,7 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         this.map = googleMap;
 
         // Enable location layer if permission granted
-        if (ActivityCompat.checkSelfPermission(this,
+        if (checkLocationPermission() && ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             map.setMyLocationEnabled(true);
         }
@@ -211,6 +373,10 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         if (userLocation != null) {
             updateMapWithUserLocation();
         }
+
+        // Mark map as ready
+        isMapReady = true;
+        checkAndHideLoading();
     }
 
     private void updateMapWithUserLocation() {
@@ -239,7 +405,11 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
             @Override
             public void onResponse(@NonNull Call<List<job>> call,
                                    @NonNull Response<List<job>> response) {
+                // Mark jobs as loaded
+                areJobsLoaded = true;
+
                 if (!response.isSuccessful()) {
+                    checkAndHideLoading();
                     Toast.makeText(nearme.this,
                             "Failed to load jobs: " + response.code(),
                             Toast.LENGTH_SHORT).show();
@@ -247,6 +417,7 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
                 }
 
                 if (response.body() == null || response.body().isEmpty()) {
+                    checkAndHideLoading();
                     Toast.makeText(nearme.this,
                             "No jobs available", Toast.LENGTH_SHORT).show();
                     return;
@@ -264,11 +435,15 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
 
                 Toast.makeText(nearme.this,
                         allJobs.size() + " jobs loaded", Toast.LENGTH_SHORT).show();
+
+                checkAndHideLoading();
             }
 
             @Override
             public void onFailure(@NonNull Call<List<job>> call,
                                   @NonNull Throwable t) {
+                areJobsLoaded = true;
+                checkAndHideLoading();
                 Toast.makeText(nearme.this,
                         "Error loading jobs: " + t.getMessage(),
                         Toast.LENGTH_LONG).show();
@@ -389,5 +564,11 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         }
 
         jobsAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopPulseAnimation();
     }
 }

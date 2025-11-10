@@ -36,7 +36,8 @@ public abstract class baseNetworkCheck extends AppCompatActivity {
                 runOnUiThread(() -> {
                     showNetworkOverlay();
                     wasDisconnected = true;
-                    onNetworkLost();
+                    // Call the protected method for child classes to override
+                    baseNetworkCheck.this.handleNetworkLost();
                 });
             }
         });
@@ -59,12 +60,19 @@ public abstract class baseNetworkCheck extends AppCompatActivity {
 
         if (rootView != null && rootView.getChildCount() > 0) {
             LayoutInflater inflater = LayoutInflater.from(this);
-            networkOverlay = inflater.inflate(R.layout.netorkloading, rootView, false);
+            networkOverlay = inflater.inflate(R.layout.networkloading, rootView, false);
 
+            // Make sure it's added as the topmost view
             rootView.addView(networkOverlay);
 
-            if (!networkMonitor.isNetworkAvailable()) {
-                showNetworkOverlay();
+            // Bring to front
+            networkOverlay.bringToFront();
+
+            // Initial state check
+            if (!isNetworkAvailable()) {
+                networkOverlay.setVisibility(View.VISIBLE);
+            } else {
+                networkOverlay.setVisibility(View.GONE);
             }
         }
     }
@@ -73,6 +81,7 @@ public abstract class baseNetworkCheck extends AppCompatActivity {
         if (networkOverlay != null) {
             networkOverlay.setVisibility(View.VISIBLE);
             networkOverlay.setAlpha(0f);
+            networkOverlay.bringToFront();
             networkOverlay.animate()
                     .alpha(1f)
                     .setDuration(300)
@@ -85,7 +94,11 @@ public abstract class baseNetworkCheck extends AppCompatActivity {
             networkOverlay.animate()
                     .alpha(0f)
                     .setDuration(300)
-                    .withEndAction(() -> networkOverlay.setVisibility(View.GONE))
+                    .withEndAction(() -> {
+                        if (networkOverlay != null) {
+                            networkOverlay.setVisibility(View.GONE);
+                        }
+                    })
                     .start();
         }
     }
@@ -96,11 +109,15 @@ public abstract class baseNetworkCheck extends AppCompatActivity {
         if (networkMonitor != null) {
             networkMonitor.startMonitoring();
 
-            // Check current state
+            // Check current state and update UI accordingly
             if (!networkMonitor.isNetworkAvailable()) {
-                showNetworkOverlay();
+                if (networkOverlay != null) {
+                    networkOverlay.setVisibility(View.VISIBLE);
+                }
             } else {
-                hideNetworkOverlay();
+                if (networkOverlay != null) {
+                    networkOverlay.setVisibility(View.GONE);
+                }
             }
         }
     }
@@ -113,14 +130,34 @@ public abstract class baseNetworkCheck extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (networkMonitor != null) {
+            networkMonitor.stopMonitoring();
+        }
+    }
+
+    /**
+     * Called when network connection is restored after being lost
+     * Override this in child activities if needed
+     */
     protected void onNetworkRestored() {
         // Override in child activities if needed
     }
 
-    protected void onNetworkLost() {
+    /**
+     * Called when network connection is lost
+     * Override this in child activities if needed
+     */
+    protected void handleNetworkLost() {
         // Override in child activities if needed
     }
 
+    /**
+     * Check if network is currently available
+     * @return true if network is available, false otherwise
+     */
     protected boolean isNetworkAvailable() {
         return networkMonitor != null && networkMonitor.isNetworkAvailable();
     }
