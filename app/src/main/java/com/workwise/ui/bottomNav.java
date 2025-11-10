@@ -158,8 +158,8 @@ public abstract class bottomNav extends baseNetworkCheck {
     }
 
     @Override
-    protected void onNetworkLost() {
-        super.onNetworkLost();
-        // Optionally handle network loss in activities
+    protected void handleNetworkLost() {
+        super.handleNetworkLost();
+        // Network overlay will show automatically
     }
 }

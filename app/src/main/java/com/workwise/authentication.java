@@ -102,8 +102,8 @@ public class authentication extends baseNetworkCheck {
     }
 
     @Override
-    protected void onNetworkLost() {
-        super.onNetworkLost();
+    protected void handleNetworkLost() {
+        super.handleNetworkLost();
         // Network overlay will show automatically
     }
 
