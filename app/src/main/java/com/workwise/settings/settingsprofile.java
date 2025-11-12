@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -22,8 +21,12 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.workwise.R;
-import com.workwise.models.*;
-import com.workwise.network.*;
+import com.workwise.models.ProfileImageUploadResponse;
+import com.workwise.models.UpdateProfileIn;
+import com.workwise.models.UserProfileOut;
+import com.workwise.network.apiClient;
+import com.workwise.network.apiConfig;
+import com.workwise.network.apiService;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,14 +48,14 @@ public class settingsprofile extends AppCompatActivity {
 
     private apiService api;
     private int userId = -1;
-    private String currentProfileImagePath = null;   // Server path (e.g. "uploads/profiles/123.jpg")
-    private File selectedImageFile = null;           // Local file for upload
-    private boolean shouldRemoveImage = false;       // Flag to remove image on save
+    private String currentProfileImagePath = null;
+    private File selectedImageFile = null;
+    private boolean shouldRemoveImage = false;
 
     private final ActivityResultLauncher<String> requestPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) openImagePicker();
-                else Toast.makeText(this, "Permission denied. Enable storage access.", Toast.LENGTH_LONG).show();
+                else Toast.makeText(this, "Permission denied", Toast.LENGTH_LONG).show();
             });
 
     private final ActivityResultLauncher<Intent> pickImage =
@@ -97,7 +100,6 @@ public class settingsprofile extends AppCompatActivity {
 
     private void setupClickListeners() {
         backButton.setOnClickListener(v -> finish());
-
         changePhotoButton.setOnClickListener(v -> checkPermissionAndOpenPicker());
 
         removePhotoButton.setOnClickListener(v -> {
@@ -105,15 +107,13 @@ public class settingsprofile extends AppCompatActivity {
             currentProfileImagePath = null;
             shouldRemoveImage = true;
             profileImagePreview.setImageResource(R.drawable.outlineaccountscircle24);
-            Toast.makeText(this, "Photo will be removed when you save", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Photo will be removed on save", Toast.LENGTH_SHORT).show();
         });
 
         saveButton.setOnClickListener(v -> saveProfile());
     }
 
-    /* --------------------------------------------------------------------- */
-    /*  PERMISSIONS & IMAGE PICKER                                           */
-    /* --------------------------------------------------------------------- */
+    /* ---------- PERMISSIONS & IMAGE PICKER ---------- */
     private void checkPermissionAndOpenPicker() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             openImagePicker();
@@ -128,7 +128,8 @@ public class settingsprofile extends AppCompatActivity {
     }
 
     private void openImagePicker() {
-        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Intent intent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.setType("image/*");
         pickImage.launch(intent);
     }
@@ -136,42 +137,45 @@ public class settingsprofile extends AppCompatActivity {
     private void handleSelectedImage(Uri uri) {
         selectedImageFile = createTempFileFromUri(uri);
         if (selectedImageFile != null) {
-            Glide.with(this)
-                    .load(uri)
+            Glide.with(this).load(uri)
                     .placeholder(R.drawable.outlineaccountscircle24)
                     .circleCrop()
                     .into(profileImagePreview);
-            shouldRemoveImage = false; // New image selected → don't remove
+            shouldRemoveImage = false;
         } else {
             Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
         }
     }
 
+    // --- THIS METHOD IS NOW FIXED ---
     private File createTempFileFromUri(Uri uri) {
-        InputStream in = null;
-        FileOutputStream out = null;
-        try {
-            File temp = new File(getCacheDir(), "temp_profile_" + System.currentTimeMillis() + ".jpg");
-            in = getContentResolver().openInputStream(uri);
-            if (in == null) return null;
-            out = new FileOutputStream(temp);
+        // Create the destination file object FIRST
+        File destinationFile = new File(getCacheDir(), "temp_profile_" + System.currentTimeMillis() + ".jpg");
+
+        try (InputStream in = getContentResolver().openInputStream(uri);
+             FileOutputStream out = new FileOutputStream(destinationFile)) {
+
             byte[] buf = new byte[4096];
             int len;
-            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-            out.flush();
-            return temp;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            out.flush(); // Ensure all data is written
+
+            // Now that the file is written, just return the file object
+            return destinationFile;
+
         } catch (Exception e) {
             e.printStackTrace();
+            // If it failed, delete the partially created file
+            if (destinationFile != null && destinationFile.exists()) {
+                destinationFile.delete();
+            }
             return null;
-        } finally {
-            try { if (out != null) out.close(); } catch (Exception ignored) {}
-            try { if (in != null) in.close(); } catch (Exception ignored) {}
         }
     }
 
-    /* --------------------------------------------------------------------- */
-    /*  LOAD PROFILE FROM SERVER                                             */
-    /* --------------------------------------------------------------------- */
+    /* ---------- LOAD PROFILE ---------- */
     private void loadUserProfile() {
         saveButton.setEnabled(false);
         saveButton.setText("Loading...");
@@ -179,14 +183,13 @@ public class settingsprofile extends AppCompatActivity {
         Call<UserProfileOut> call = api.getProfile(userId, apiConfig.tokenProfileGet);
         call.enqueue(new Callback<UserProfileOut>() {
             @Override
-            public void onResponse(Call<UserProfileOut> call, Response<UserProfileOut> response) {
+            public void onResponse(Call<UserProfileOut> call, Response<UserProfileOut> resp) {
                 saveButton.setEnabled(true);
                 saveButton.setText("Save Changes");
 
-                if (response.isSuccessful() && response.body() != null) {
-                    UserProfileOut profile = response.body();
-                    updateUI(profile);
-                    saveToSharedPreferences(profile);
+                if (resp.isSuccessful() && resp.body() != null) {
+                    updateUI(resp.body());
+                    saveToSharedPreferences(resp.body());
                 } else {
                     Toast.makeText(settingsprofile.this, "Using cached data", Toast.LENGTH_SHORT).show();
                     loadFromSharedPreferences();
@@ -203,21 +206,19 @@ public class settingsprofile extends AppCompatActivity {
         });
     }
 
-    private void updateUI(UserProfileOut profile) {
+    private void updateUI(UserProfileOut p) {
         runOnUiThread(() -> {
-            nameInput.setText(profile.profileName != null ? profile.profileName : "");
-            bioInput.setText(profile.profileBio != null ? profile.profileBio : "");
-            emailInput.setText(profile.email != null ? profile.email : "");
+            nameInput.setText(p.profileName != null ? p.profileName : "");
+            bioInput.setText(p.profileBio != null ? p.profileBio : "");
+            emailInput.setText(p.email != null ? p.email : "");
             emailInput.setEnabled(false);
-            sideProjectsInput.setText(profile.sideProjects != null ? profile.sideProjects : "");
+            sideProjectsInput.setText(p.sideProjects != null ? p.sideProjects : "");
 
-            currentProfileImagePath = profile.profileImage;
+            currentProfileImagePath = p.profileImage;
             if (!TextUtils.isEmpty(currentProfileImagePath)) {
-                String url = buildFullImageUrl(currentProfileImagePath);
-                Glide.with(settingsprofile.this)
-                        .load(url)
+                Glide.with(this)
+                        .load(buildFullImageUrl(currentProfileImagePath))
                         .placeholder(R.drawable.outlineaccountscircle24)
-                        .error(R.drawable.outlineaccountscircle24)
                         .circleCrop()
                         .into(profileImagePreview);
             } else {
@@ -226,39 +227,37 @@ public class settingsprofile extends AppCompatActivity {
         });
     }
 
-    private String buildFullImageUrl(String relativePath) {
-        String path = relativePath.replace("\\", "/");
-        if (path.startsWith("/")) path = path.substring(1);
+    private String buildFullImageUrl(String rel) {
+        String p = rel.replace("\\", "/");
+        if (p.startsWith("/")) p = p.substring(1);
         String base = apiConfig.baseUrl.endsWith("/") ? apiConfig.baseUrl.substring(0, apiConfig.baseUrl.length() - 1) : apiConfig.baseUrl;
-        return base + "/" + path;
+        return base + "/" + p;
     }
 
-    private void saveToSharedPreferences(UserProfileOut profile) {
-        SharedPreferences.Editor editor = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE).edit();
-        editor.putString("user_name", profile.profileName != null ? profile.profileName : "");
-        editor.putString("user_email", profile.email != null ? profile.email : "");
-        editor.putString("user_bio", profile.profileBio != null ? profile.profileBio : "");
-        editor.putString("user_profile_image", profile.profileImage != null ? profile.profileImage : "");
-        editor.putString("user_side_projects", profile.sideProjects != null ? profile.sideProjects : "");
-        editor.apply();
+    private void saveToSharedPreferences(UserProfileOut p) {
+        SharedPreferences.Editor e = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE).edit();
+        e.putString("user_name", p.profileName != null ? p.profileName : "");
+        e.putString("user_email", p.email != null ? p.email : "");
+        e.putString("user_bio", p.profileBio != null ? p.profileBio : "");
+        e.putString("user_profile_image", p.profileImage != null ? p.profileImage : "");
+        e.putString("user_side_projects", p.sideProjects != null ? p.sideProjects : "");
+        e.apply();
     }
 
     private void loadFromSharedPreferences() {
-        SharedPreferences prefs = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
-        nameInput.setText(prefs.getString("user_name", ""));
-        bioInput.setText(prefs.getString("user_bio", ""));
-        emailInput.setText(prefs.getString("user_email", ""));
-        sideProjectsInput.setText(prefs.getString("user_side_projects", ""));
-        String img = prefs.getString("user_profile_image", null);
+        SharedPreferences p = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
+        nameInput.setText(p.getString("user_name", ""));
+        bioInput.setText(p.getString("user_bio", ""));
+        emailInput.setText(p.getString("user_email", ""));
+        sideProjectsInput.setText(p.getString("user_side_projects", ""));
+        String img = p.getString("user_profile_image", null);
         if (!TextUtils.isEmpty(img)) {
             currentProfileImagePath = img;
             Glide.with(this).load(buildFullImageUrl(img)).into(profileImagePreview);
         }
     }
 
-    /* --------------------------------------------------------------------- */
-    /*  SAVE PROFILE: Image → Text                                           */
-    /* --------------------------------------------------------------------- */
+    /* ---------- SAVE PROFILE ---------- */
     private void saveProfile() {
         String name = nameInput.getText().toString().trim();
         if (TextUtils.isEmpty(name)) {
@@ -279,17 +278,17 @@ public class settingsprofile extends AppCompatActivity {
     }
 
     private void uploadProfileImage() {
-        RequestBody reqFile = RequestBody.create(MediaType.parse("image/*"), selectedImageFile);
-        MultipartBody.Part part = MultipartBody.Part.createFormData("file", selectedImageFile.getName(), reqFile);
+        RequestBody rb = RequestBody.create(MediaType.parse("image/*"), selectedImageFile);
+        MultipartBody.Part part = MultipartBody.Part.createFormData("file", selectedImageFile.getName(), rb);
 
         Call<ProfileImageUploadResponse> call = api.uploadProfileImage(userId, part, apiConfig.tokenProfileImage);
         call.enqueue(new Callback<ProfileImageUploadResponse>() {
             @Override
-            public void onResponse(Call<ProfileImageUploadResponse> call, Response<ProfileImageUploadResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    currentProfileImagePath = response.body().filePath;
+            public void onResponse(Call<ProfileImageUploadResponse> call, Response<ProfileImageUploadResponse> r) {
+                if (r.isSuccessful() && r.body() != null) {
+                    currentProfileImagePath = r.body().filePath;
                     shouldRemoveImage = false;
-                    updateProfileInfo();  // Now update text + new image path
+                    updateProfileInfo();
                 } else {
                     enableSaveButton();
                     Toast.makeText(settingsprofile.this, "Image upload failed", Toast.LENGTH_SHORT).show();
@@ -309,17 +308,12 @@ public class settingsprofile extends AppCompatActivity {
         upd.profileName = nameInput.getText().toString().trim();
         upd.profileBio = bioInput.getText().toString().trim();
         upd.sideProjects = sideProjectsInput.getText().toString().trim();
-        upd.profileImage = "";  // Tell backend to remove
+        upd.profileImage = "";               // tell backend to delete
 
         Call<UserProfileOut> call = api.updateProfile(userId, upd, apiConfig.tokenProfileUpdate);
         call.enqueue(new Callback<UserProfileOut>() {
-            @Override
-            public void onResponse(Call<UserProfileOut> call, Response<UserProfileOut> resp) {
-                handleUpdateResponse(resp);
-            }
-
-            @Override
-            public void onFailure(Call<UserProfileOut> call, Throwable t) {
+            @Override public void onResponse(Call<UserProfileOut> c, Response<UserProfileOut> r) { handleUpdateResponse(r); }
+            @Override public void onFailure(Call<UserProfileOut> c, Throwable t) {
                 enableSaveButton();
                 Toast.makeText(settingsprofile.this, "Failed to remove image", Toast.LENGTH_SHORT).show();
             }
@@ -328,34 +322,34 @@ public class settingsprofile extends AppCompatActivity {
 
     private void updateProfileInfo() {
         UpdateProfileIn upd = new UpdateProfileIn();
-        upd.profileName = nameInput.getText().toString().trim();
-        upd.profileBio = bioInput.getText().toString().trim();
-        upd.sideProjects = sideProjectsInput.getText().toString().trim();
+
+        String n = nameInput.getText().toString().trim();
+        String b = bioInput.getText().toString().trim();
+        String s = sideProjectsInput.getText().toString().trim();
+
+        upd.profileName   = TextUtils.isEmpty(n) ? "" : n;
+        upd.profileBio    = TextUtils.isEmpty(b) ? "" : b;
+        upd.sideProjects  = TextUtils.isEmpty(s) ? "" : s;
 
         Call<UserProfileOut> call = api.updateProfile(userId, upd, apiConfig.tokenProfileUpdate);
         call.enqueue(new Callback<UserProfileOut>() {
-            @Override
-            public void onResponse(Call<UserProfileOut> call, Response<UserProfileOut> resp) {
-                handleUpdateResponse(resp);
-            }
-
-            @Override
-            public void onFailure(Call<UserProfileOut> call, Throwable t) {
+            @Override public void onResponse(Call<UserProfileOut> c, Response<UserProfileOut> r) { handleUpdateResponse(r); }
+            @Override public void onFailure(Call<UserProfileOut> c, Throwable t) {
                 enableSaveButton();
                 Toast.makeText(settingsprofile.this, "Update failed", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void handleUpdateResponse(Response<UserProfileOut> resp) {
+    private void handleUpdateResponse(Response<UserProfileOut> r) {
         enableSaveButton();
         shouldRemoveImage = false;
-        if (resp.isSuccessful() && resp.body() != null) {
-            saveToSharedPreferences(resp.body());
+        if (r.isSuccessful() && r.body() != null) {
+            saveToSharedPreferences(r.body());
             Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
             finish();
         } else {
-            Toast.makeText(this, "Update failed: " + resp.message(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Update failed: " + r.message(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -367,8 +361,6 @@ public class settingsprofile extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (selectedImageFile != null && selectedImageFile.exists()) {
-            selectedImageFile.delete();
-        }
+        if (selectedImageFile != null && selectedImageFile.exists()) selectedImageFile.delete();
     }
 }

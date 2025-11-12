@@ -7,7 +7,10 @@ import com.workwise.models.cvItem;
 import com.workwise.network.apiClient;
 import com.workwise.network.apiConfig;
 import com.workwise.network.apiService;
-import com.workwise.models.userProfile;
+// IMPORT THE CORRECT MODEL
+import com.workwise.models.UserProfileOut;
+// REMOVE THE INCORRECT MODEL
+// import com.workwise.models.userProfile;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -130,12 +133,16 @@ public class setting extends bottomNav {
 
         if (userId == -1) return;
 
-        Call<userProfile> call = api.getProfile(userId, apiConfig.tokenProfileGet);
-        call.enqueue(new Callback<userProfile>() {
+        // --- FIX 1: Use UserProfileOut for the Call ---
+        Call<UserProfileOut> call = api.getProfile(userId, apiConfig.tokenProfileGet);
+
+        // --- FIX 2: Use UserProfileOut for the Callback ---
+        call.enqueue(new Callback<UserProfileOut>() {
             @Override
-            public void onResponse(Call<userProfile> call, Response<userProfile> response) {
+            public void onResponse(Call<UserProfileOut> call, Response<UserProfileOut> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    userProfile profile = response.body();
+                    // --- FIX 3: Use UserProfileOut for the profile variable ---
+                    UserProfileOut profile = response.body();
                     updateUI(profile);
                     saveToSharedPreferences(profile);
                     fetchStats();
@@ -145,7 +152,7 @@ public class setting extends bottomNav {
             }
 
             @Override
-            public void onFailure(Call<userProfile> call, Throwable t) {
+            public void onFailure(Call<UserProfileOut> call, Throwable t) {
                 Toast.makeText(setting.this, "Network error during sync: " + t.getMessage() + ". Using cached data.", Toast.LENGTH_SHORT).show();
             }
         });
@@ -176,7 +183,8 @@ public class setting extends bottomNav {
         if (savedJobsCount != null) savedJobsCount.setText(prefs.getString("saved_jobs_count", "0"));
     }
 
-    private void updateUI(userProfile profile) {
+    // --- FIX 4: Update method parameter to UserProfileOut ---
+    private void updateUI(UserProfileOut profile) {
         runOnUiThread(() -> {
             if (profileName != null) profileName.setText(profile.profileName != null ? profile.profileName : "User Name");
             if (profileEmail != null) profileEmail.setText(profile.email != null ? profile.email : "user@workwise.za");
@@ -202,7 +210,8 @@ public class setting extends bottomNav {
         });
     }
 
-    private void saveToSharedPreferences(userProfile profile) {
+    // --- FIX 5: Update method parameter to UserProfileOut ---
+    private void saveToSharedPreferences(UserProfileOut profile) {
         SharedPreferences prefs = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString("user_name", profile.profileName != null ? profile.profileName : "");
