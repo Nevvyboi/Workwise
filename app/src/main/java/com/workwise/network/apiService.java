@@ -22,19 +22,24 @@ public interface apiService {
 
     // ========== PROFILE ==========
     @GET("v1/workwise/profile/{user_id}")
-    Call<userProfile> getProfile(@Path("user_id") int userId,
-                                 @Header("X-Endpoint-Token") String endpointToken);
+    Call<UserProfileOut> getProfile(
+            @Path("user_id") int userId,
+            @Header("X-Endpoint-Token") String token
+    );
 
     @PUT("v1/workwise/profile/{user_id}")
     Call<userProfile> updateProfile(@Path("user_id") int userId,
                                     @Body userProfileUpdate profile,
                                     @Header("X-Endpoint-Token") String endpointToken);
 
+    // POST upload image
     @Multipart
-    @POST("v1/workwise/profile/{user_id}/image")
-    Call<profileImageUpload> uploadProfileImage(@Path("user_id") int userId,
-                                                @Part MultipartBody.Part file,
-                                                @Header("X-Endpoint-Token") String endpointToken);
+    @POST("v1/workwise/profile/image")
+    Call<ProfileImageUploadResponse> uploadProfileImage(
+            @Query("user_id") int userId,
+            @Part MultipartBody.Part file,
+            @Header("X-Endpoint-Token") String token
+    );
 
     // ========== CV ==========
     @GET("v1/workwise/cvs/{user_id}")

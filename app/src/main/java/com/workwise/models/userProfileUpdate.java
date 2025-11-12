@@ -5,4 +5,5 @@ public class userProfileUpdate {
     public String profileBio;
     public String phoneNumber;
     public String location;
+    public String sideProjects;
 }

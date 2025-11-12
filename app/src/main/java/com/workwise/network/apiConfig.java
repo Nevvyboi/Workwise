@@ -2,8 +2,7 @@ package com.workwise.network;
 
 public final class apiConfig {
 
-    //public static final String baseUrl = "https://nevvyboo.fun/";
-    public static final String baseUrl = "http://192.168.1.158:8000/";
+    public static final String baseUrl = "http://172.29.32.1:8000/";
 
     // Authentication tokens
     public static final String tokenRegister = "USNACCTOK123";
