@@ -27,10 +27,11 @@ public interface apiService {
             @Header("X-Endpoint-Token") String token
     );
 
+    // --- FIXES APPLIED HERE ---
     @PUT("v1/workwise/profile/{user_id}")
-    Call<userProfile> updateProfile(@Path("user_id") int userId,
-                                    @Body userProfileUpdate profile,
-                                    @Header("X-Endpoint-Token") String endpointToken);
+    Call<UserProfileOut> updateProfile(@Path("user_id") int userId,
+                                       @Body UpdateProfileIn body,
+                                       @Header("X-Endpoint-Token") String endpointToken);
 
     // POST upload image
     @Multipart
@@ -102,7 +103,7 @@ public interface apiService {
     @DELETE("v1/workwise/saved-jobs/{user_id}/{saved_job_id}")
     Call<apiResponse> deleteSavedJob(@Path("user_id") int userId,
                                      @Path("saved_job_id") int savedJobId,
-                                     @Header("X-Endpoint-Token") String endpointToken);
+                                     @Header("X-Entertainment-Token") String endpointToken);
 
     // ========== JOBS ==========
     @GET("/v1/workwise/jobs")
