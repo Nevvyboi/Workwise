@@ -1,27 +1,63 @@
 package com.workwise;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.navigation.NavigationView;
+import com.workwise.cv.managecv;
 import com.workwise.ui.bottomNav;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.MenuItem;
+import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+
 public class home extends bottomNav {
 
     private SharedPreferences prefs;
     private int profileCompleteness = 0;
     private int dailyStreak = 0;
+    private DrawerLayout drawerLayout;
+    private ActionBarDrawerToggle toggle;
+    private ImageButton menuButton, profileButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.home);
+
+        drawerLayout = findViewById(R.id.drawerLayout);
+        NavigationView navigationView = findViewById(R.id.navigationView);
+        menuButton = findViewById(R.id.expandButton);
+        profileButton = findViewById(R.id.profileButton);
+
+        // Drawer toggle
+        toggle = new ActionBarDrawerToggle(this, drawerLayout, null, R.string.open, R.string.close);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        menuButton.setOnClickListener(v -> {
+            if (drawerLayout.isDrawerOpen(navigationView)) {
+                drawerLayout.closeDrawer(navigationView);
+            } else {
+                drawerLayout.openDrawer(navigationView);
+            }
+        });
+
+        // Expandable profile popup
+        profileButton.setOnClickListener(v -> showProfileMenu(v));
+
 
         prefs = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
         calculateProfileCompleteness();
@@ -30,6 +66,25 @@ public class home extends bottomNav {
         setupClickListeners();
         displaySmartGreeting();
     }
+
+    private void showProfileMenu(View v) {
+        PopupMenu popup = new PopupMenu(this, v);
+        popup.getMenuInflater().inflate(R.menu.profile_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(item -> {
+            // Handle profile menu clicks
+            if (item.getItemId() == R.id.menu_profile) {
+                // Open Profile Activity
+            } else if (item.getItemId() == R.id.menu_settings) {
+                // Open Settings
+            }
+            return true;
+        });
+        popup.show();
+    }
+
+
+
+
 
     @Override
     protected String getCurrentNavItem() {
@@ -660,7 +715,7 @@ public class home extends bottomNav {
 
     private void navigateToCV() {
         try {
-            Intent intent = new Intent(this, MyCV.class);
+            Intent intent = new Intent(this, managecv.class);
             startActivity(intent);
             overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
         } catch (Exception e) {

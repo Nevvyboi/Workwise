@@ -1,8 +1,8 @@
 pluginManagement {
     repositories { google(); mavenCentral(); gradlePluginPortal() }
     plugins {
-        id("com.android.application") version "8.13.0"
-        id("com.android.library") version "8.13.0"
+        id("com.android.application") version "8.13.1"
+        id("com.android.library") version "8.13.1"
     }
 }
 plugins {
