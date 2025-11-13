@@ -8,8 +8,10 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.MenuItem; // Import for MenuItem
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu; // Import for PopupMenu
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -27,6 +29,7 @@ import com.workwise.models.UserProfileOut;
 import com.workwise.network.apiClient;
 import com.workwise.network.apiConfig;
 import com.workwise.network.apiService;
+import com.google.android.material.floatingactionbutton.FloatingActionButton; // Import for FAB
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,8 +46,9 @@ public class settingsprofile extends AppCompatActivity {
 
     private ImageView profileImagePreview;
     private TextInputEditText bioInput, nameInput, sideProjectsInput, emailInput;
-    private MaterialButton changePhotoButton, removePhotoButton, saveButton;
+    private MaterialButton saveButton; // Removed changePhotoButton, removePhotoButton
     private ImageButton backButton;
+    private FloatingActionButton editImageFab; // Added FAB
 
     private apiService api;
     private int userId = -1;
@@ -92,25 +96,42 @@ public class settingsprofile extends AppCompatActivity {
         nameInput = findViewById(R.id.nameInput);
         sideProjectsInput = findViewById(R.id.sideProjectsInput);
         emailInput = findViewById(R.id.emailInput);
-        changePhotoButton = findViewById(R.id.changePhotoButton);
-        removePhotoButton = findViewById(R.id.removePhotoButton);
+        // Removed changePhotoButton, removePhotoButton
         saveButton = findViewById(R.id.saveButton);
         backButton = findViewById(R.id.backButton);
+        editImageFab = findViewById(R.id.editImageFab); // Initialize FAB
     }
 
     private void setupClickListeners() {
         backButton.setOnClickListener(v -> finish());
-        changePhotoButton.setOnClickListener(v -> checkPermissionAndOpenPicker());
-
-        removePhotoButton.setOnClickListener(v -> {
-            selectedImageFile = null;
-            currentProfileImagePath = null;
-            shouldRemoveImage = true;
-            profileImagePreview.setImageResource(R.drawable.outlineaccountscircle24);
-            Toast.makeText(this, "Photo will be removed on save", Toast.LENGTH_SHORT).show();
-        });
-
+        // Replaced direct button clicks with FAB click and PopupMenu
+        editImageFab.setOnClickListener(this::showImagePopupMenu);
         saveButton.setOnClickListener(v -> saveProfile());
+    }
+
+    // New method to show the popup menu for image actions
+    private void showImagePopupMenu(android.view.View v) {
+        PopupMenu popup = new PopupMenu(this, v);
+        popup.getMenuInflater().inflate(R.menu.profile_image_menu, popup.getMenu()); // You'll need to create this menu XML
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                int id = item.getItemId();
+                if (id == R.id.action_change_photo) { // Make sure these IDs match your menu XML
+                    checkPermissionAndOpenPicker();
+                    return true;
+                } else if (id == R.id.action_remove_photo) { // Make sure these IDs match your menu XML
+                    selectedImageFile = null;
+                    currentProfileImagePath = null;
+                    shouldRemoveImage = true;
+                    profileImagePreview.setImageResource(R.drawable.outlineaccountscircle24);
+                    Toast.makeText(settingsprofile.this, "Photo will be removed on save", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                return false;
+            }
+        });
+        popup.show();
     }
 
     /* ---------- PERMISSIONS & IMAGE PICKER ---------- */
@@ -147,27 +168,19 @@ public class settingsprofile extends AppCompatActivity {
         }
     }
 
-    // --- THIS METHOD IS NOW FIXED ---
     private File createTempFileFromUri(Uri uri) {
-        // Create the destination file object FIRST
         File destinationFile = new File(getCacheDir(), "temp_profile_" + System.currentTimeMillis() + ".jpg");
-
         try (InputStream in = getContentResolver().openInputStream(uri);
              FileOutputStream out = new FileOutputStream(destinationFile)) {
-
             byte[] buf = new byte[4096];
             int len;
             while ((len = in.read(buf)) > 0) {
                 out.write(buf, 0, len);
             }
-            out.flush(); // Ensure all data is written
-
-            // Now that the file is written, just return the file object
+            out.flush();
             return destinationFile;
-
         } catch (Exception e) {
             e.printStackTrace();
-            // If it failed, delete the partially created file
             if (destinationFile != null && destinationFile.exists()) {
                 destinationFile.delete();
             }
