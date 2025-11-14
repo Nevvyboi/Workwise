@@ -1,29 +1,51 @@
 package com.workwise;
 
-import com.workwise.ui.bottomNav;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.widget.EditText;
+import android.util.Log;
 import android.widget.Toast;
-import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.tabs.TabLayout;
+
+import androidx.annotation.Nullable;
+
+import com.google.android.material.button.MaterialButton;
+import com.workwise.R;
+import com.workwise.models.ConversationCreateIn;
+import com.workwise.models.ConversationOut;
+import com.workwise.network.apiClient;
+import com.workwise.network.apiConfig;
+import com.workwise.network.apiService;
+import com.workwise.ui.bottomNav;
+
+import java.util.Arrays;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class community extends bottomNav {
 
-    private TabLayout tabLayout;
-    private EditText searchInput;
-    private MaterialCardView chatItem1, chatItem2, chatItem3;
+    private MaterialButton joinChatButton;
+    private apiService svc;
+    private static final String PREF_NAME = "WorkWisePrefs";
+    private static final int COMMUNITY_CHAT_ID = 1000; // Fixed community chat ID
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.community);
 
-        initializeViews();
-        setupTabLayout();
-        setupSearchBar();
-        setupChatItems();
+        // Initialize views
+        joinChatButton = findViewById(R.id.joinChatButton);
+
+        // API service
+        svc = apiClient.service();
+
+        // Set click listener for join chat button
+        if (joinChatButton != null) {
+            joinChatButton.setOnClickListener(v -> joinCommunityChat());
+        }
     }
 
     @Override
@@ -31,136 +53,60 @@ public class community extends bottomNav {
         return "community";
     }
 
-    private void initializeViews() {
-        tabLayout = findViewById(R.id.tabLayout);
-        searchInput = findViewById(R.id.searchInput);
-        chatItem1 = findViewById(R.id.chatItem1);
-        chatItem2 = findViewById(R.id.chatItem2);
-        chatItem3 = findViewById(R.id.chatItem3);
-
-        // Top bar buttons
-        findViewById(R.id.menuButton).setOnClickListener(v -> {
-            Toast.makeText(this, "Opening Menu...", Toast.LENGTH_SHORT).show();
-            // TODO: Open navigation drawer
-        });
-
-        findViewById(R.id.profileButton).setOnClickListener(v -> {
-            Toast.makeText(this, "Opening Profile...", Toast.LENGTH_SHORT).show();
-            // TODO: Navigate to profile
-        });
-    }
-
-    private void setupTabLayout() {
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                int position = tab.getPosition();
-                switch (position) {
-                    case 0:
-                        // Groups tab
-                        Toast.makeText(community.this, "Groups", Toast.LENGTH_SHORT).show();
-                        // TODO: Load groups
-                        break;
-                    case 1:
-                        // Unions tab
-                        Toast.makeText(community.this, "Unions", Toast.LENGTH_SHORT).show();
-                        // TODO: Load unions
-                        break;
-                    case 2:
-                        // Chats tab (default)
-                        Toast.makeText(community.this, "Chats", Toast.LENGTH_SHORT).show();
-                        // TODO: Load chats
-                        break;
-                }
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-                // Not needed
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-                // Not needed
-            }
-        });
-
-        // Set default tab to "Chats" (index 2)
-        TabLayout.Tab chatsTab = tabLayout.getTabAt(2);
-        if (chatsTab != null) {
-            chatsTab.select();
-        }
-    }
-
-    private void setupSearchBar() {
-        searchInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // Not needed
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterChats(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                // Not needed
-            }
-        });
-    }
-
-    private void setupChatItems() {
-        if (chatItem1 != null) {
-            chatItem1.setOnClickListener(v -> {
-                Toast.makeText(this, "Opening chat with Phumlani Nkosi", Toast.LENGTH_SHORT).show();
-                // TODO: Navigate to chat screen
-                // Intent intent = new Intent(this, ChatActivity.class);
-                // intent.putExtra("chat_id", "1");
-                // intent.putExtra("chat_name", "Phumlani Nkosi");
-                // startActivity(intent);
-            });
+    private void joinCommunityChat() {
+        int me = getCurrentUserId();
+        if (me <= 0) {
+            toast("Please sign in again");
+            Log.e("COMMUNITY", "Invalid user ID: " + me);
+            return;
         }
 
-        // Chat Item 2 - WorkWise Team
-        if (chatItem2 != null) {
-            chatItem2.setOnClickListener(v -> {
-                Toast.makeText(this, "Opening WorkWise Team chat", Toast.LENGTH_SHORT).show();
-                // TODO: Navigate to chat screen
-            });
-        }
+        Log.d("COMMUNITY", "Joining community chat, user ID: " + me);
 
-        // Chat Item 3 - Union SA
-        if (chatItem3 != null) {
-            chatItem3.setOnClickListener(v -> {
-                Toast.makeText(this, "Opening Union SA chat", Toast.LENGTH_SHORT).show();
-                // TODO: Navigate to chat screen
-            });
-        }
+        // Use fixed community chat ID instead of creating new one
+        List<Integer> participants = Arrays.asList(me, COMMUNITY_CHAT_ID);
+
+        svc.createChat(apiConfig.tokenChatCreate, new ConversationCreateIn(participants))
+                .enqueue(new Callback<ConversationOut>() {
+                    @Override
+                    public void onResponse(Call<ConversationOut> call, Response<ConversationOut> resp) {
+                        Log.d("COMMUNITY", "Response code: " + resp.code());
+                        if (!resp.isSuccessful() || resp.body() == null) {
+                            String errorMsg = "Failed to join community chat (" + resp.code() + ")";
+                            toast(errorMsg);
+                            Log.e("COMMUNITY", errorMsg);
+                            // Fallback: open chat directly with community ID
+                            launchChatActivity(COMMUNITY_CHAT_ID, "WorkWise Community");
+                            return;
+                        }
+                        Log.d("COMMUNITY", "Community chat joined with ID: " + resp.body().conversationId);
+                        launchChatActivity(resp.body().conversationId, "WorkWise Community");
+                    }
+
+                    @Override
+                    public void onFailure(Call<ConversationOut> call, Throwable t) {
+                        String errorMsg = "Network error: " + t.getMessage();
+                        toast(errorMsg);
+                        Log.e("COMMUNITY", errorMsg);
+                        // Fallback: open chat directly
+                        launchChatActivity(COMMUNITY_CHAT_ID, "WorkWise Community");
+                    }
+                });
     }
 
-    private void filterChats(String query) {
-        // TODO: Implement search/filter logic
-        if (query.isEmpty()) {
-            // Show all chats
-            showAllChats();
-        } else {
-            // Filter chats based on query
-            // This is a simple example - you'd implement actual filtering
-            Toast.makeText(this, "Searching for: " + query, Toast.LENGTH_SHORT).show();
-        }
+    private void launchChatActivity(int conversationId, String displayName) {
+        Intent i = new Intent(this, com.workwise.chat.chatActivity.class);
+        i.putExtra("conversationId", conversationId);
+        i.putExtra("displayName", displayName);
+        startActivity(i);
     }
 
-    private void showAllChats() {
-        // Show all chat items
-        // In a real app, you'd use RecyclerView and filter the adapter
+    private int getCurrentUserId() {
+        SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+        return prefs.getInt("user_id", -1);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Refresh chat list when returning to this screen
-        // TODO: Load latest messages
+    private void toast(String m) {
+        Toast.makeText(this, m, Toast.LENGTH_SHORT).show();
     }
 }
