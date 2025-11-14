@@ -10,14 +10,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.android.material.card.MaterialCardView;
 import com.workwise.R;
 import com.workwise.models.job;
 import com.workwise.models.savedJobInput;
@@ -25,6 +21,12 @@ import com.workwise.network.apiClient;
 import com.workwise.network.apiConfig;
 import com.workwise.network.apiService;
 import com.workwise.models.savedJobs;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,13 +46,17 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
         this.context = context;
         this.savedJobIds = new HashSet<>();
         this.prefs = context.getSharedPreferences("WorkWisePrefs", Context.MODE_PRIVATE);
-
-        // Load saved job IDs from SharedPreferences
         loadSavedJobIds();
     }
 
+    // Method to update the job list (for search)
+    public void updateJobs(List<job> newJobs) {
+        this.jobs.clear();
+        this.jobs.addAll(newJobs);
+        notifyDataSetChanged();
+    }
+
     private void loadSavedJobIds() {
-        // Load the set of saved job IDs
         Set<String> savedIds = prefs.getStringSet("saved_job_ids", new HashSet<>());
         for (String id : savedIds) {
             try {
@@ -62,7 +68,6 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
     }
 
     private void saveSavedJobIds() {
-        // Save the set of saved job IDs to SharedPreferences
         Set<String> savedIds = new HashSet<>();
         for (Integer id : savedJobIds) {
             savedIds.add(String.valueOf(id));
@@ -81,60 +86,65 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull JobViewHolder holder, int position) {
         job job = jobs.get(position);
+        if (job == null) return;
 
-        // Bind job title
         holder.jobTitle.setText(job.getJobTitle());
-
-        // Bind company name
         holder.companyName.setText(job.getCompanyName());
+        holder.jobLocation.setText(job.getJobLocation() != null ? job.getJobLocation() : "N/A");
+        holder.salaryRange.setText(job.getSalaryRange() != null ? job.getSalaryRange() : "N/A");
 
-        // Bind location with fallback
-        String location = job.getJobLocation() != null ? job.getJobLocation() : "Location not specified";
-        holder.jobLocation.setText(location);
+        // Bind Employment Type
+        String employmentType = job.getEmploymentType();
+        if (employmentType != null && !employmentType.isEmpty()) {
+            holder.jobType.setText(employmentType);
+            holder.jobTypeCard.setVisibility(View.VISIBLE);
+        } else {
+            holder.jobTypeCard.setVisibility(View.GONE);
+        }
 
-        // Bind salary with fallback
-        String salary = job.getSalaryRange() != null ? job.getSalaryRange() : "Salary not disclosed";
-        holder.salaryRange.setText(salary);
+        // Bind Work Arrangement
+        String workArrangement = job.getWorkArrangement();
+        if (workArrangement != null && !workArrangement.isEmpty()) {
+            holder.workArrangement.setText(workArrangement);
+            holder.workArrangementCard.setVisibility(View.VISIBLE);
+        } else {
+            holder.workArrangementCard.setVisibility(View.GONE);
+        }
 
-        // Bind employment type with fallback
-        String employmentType = job.getEmploymentType() != null ? job.getEmploymentType() : "Full-Time";
-        holder.jobType.setText(employmentType);
+        // Bind Posted Time (FIXED: was getPostedAt)
+        String postedTime = job.getDatePosted();
+        if(postedTime != null && !postedTime.isEmpty()) {
+            // This is a basic format, you can add a "time ago" function later
+            holder.postedTime.setText(postedTime.substring(0, 10));
+        } else {
+            holder.postedTime.setText("Recently");
+        }
 
-        // Bind posted time with fallback
-        String postedTime = job.getPostedAt() != null ? job.getPostedAt() : "Recently";
-        holder.postedTime.setText(postedTime);
 
-        // Bind distance - get from map or show placeholder
+        // Bind distance
         Float distance = jobDistances.get(job.getJobId());
         if (distance != null) {
-            // Format distance nicely
             if (distance < 1.0f) {
-                // Less than 1km, show in meters
                 holder.distance.setText(String.format(Locale.getDefault(), "%.0f m", distance * 1000));
             } else if (distance < 10.0f) {
-                // Less than 10km, show one decimal
                 holder.distance.setText(String.format(Locale.getDefault(), "%.1f km", distance));
             } else {
-                // 10km or more, show whole number
                 holder.distance.setText(String.format(Locale.getDefault(), "%.0f km", distance));
             }
+            holder.distanceCard.setVisibility(View.VISIBLE);
         } else {
-            holder.distance.setText("-- km");
+            holder.distanceCard.setVisibility(View.GONE);
         }
 
         // Set bookmark icon state
         boolean isSaved = savedJobIds.contains(job.getJobId());
         updateBookmarkIcon(holder.bookmarkButton, isSaved);
 
-        // Handle bookmark button click
         holder.bookmarkButton.setOnClickListener(v -> {
             boolean currentlySaved = savedJobIds.contains(job.getJobId());
-
             if (currentlySaved) {
-                // Remove from saved jobs
                 unsaveJob(job, holder.bookmarkButton);
             } else {
-                // Add to saved jobs
                 saveJob(job, holder.bookmarkButton);
             }
         });
@@ -147,13 +157,12 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
             return;
         }
 
-        // Create saved job input
         savedJobInput input = new savedJobInput(
                 job.getJobTitle(),
                 job.getCompanyName(),
                 job.getJobLocation(),
                 job.getSalaryRange(),
-                job.getJobDescription()
+                job.getDescription()
         );
 
         apiService api = apiClient.get().create(apiService.class);
@@ -163,18 +172,14 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
             @Override
             public void onResponse(@NonNull Call<savedJobs> call, @NonNull Response<savedJobs> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // Add to local set
                     savedJobIds.add(job.getJobId());
                     saveSavedJobIds();
-
-                    // Update UI
                     updateBookmarkIcon(bookmarkButton, true);
                     Toast.makeText(context, "Job saved!", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(context, "Failed to save job", Toast.LENGTH_SHORT).show();
                 }
             }
-
             @Override
             public void onFailure(@NonNull Call<savedJobs> call, @NonNull Throwable t) {
                 Toast.makeText(context, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
@@ -184,14 +189,10 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
 
     private void unsaveJob(job job, ImageView bookmarkButton) {
         int userId = prefs.getInt("user_id", -1);
-        if (userId == -1) {
-            return;
-        }
+        if (userId == -1) return;
 
-        // For unsaving, we need the savedJobId from the backend
-        // For now, we'll just remove from local storage and update UI
-        // You'll need to implement proper backend deletion if needed
-
+        // Note: This only removes locally. You need a "deleteSavedJob" API call
+        // that takes the 'job.getJobId()' to properly delete from server.
         savedJobIds.remove(job.getJobId());
         saveSavedJobIds();
         updateBookmarkIcon(bookmarkButton, false);
@@ -200,11 +201,11 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
 
     private void updateBookmarkIcon(ImageView bookmarkButton, boolean isSaved) {
         if (isSaved) {
-            bookmarkButton.setImageResource(android.R.drawable.btn_star_big_on);
-            bookmarkButton.setColorFilter(context.getResources().getColor(R.color.colorPrimary));
+            bookmarkButton.setImageResource(R.drawable.baseline_bookmark_24);
+            bookmarkButton.setColorFilter(context.getResources().getColor(R.color.colorPrimary, null));
         } else {
-            bookmarkButton.setImageResource(android.R.drawable.btn_star_big_off);
-            bookmarkButton.setColorFilter(context.getResources().getColor(android.R.color.darker_gray));
+            bookmarkButton.setImageResource(R.drawable.outline_bookmark_border_24);
+            bookmarkButton.setColorFilter(context.getResources().getColor(android.R.color.darker_gray, null));
         }
     }
 
@@ -216,6 +217,8 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
     static class JobViewHolder extends RecyclerView.ViewHolder {
         TextView jobTitle, companyName, jobLocation, salaryRange, jobType, postedTime, distance;
         ImageView bookmarkButton;
+        TextView workArrangement;
+        MaterialCardView workArrangementCard, distanceCard, jobTypeCard;
 
         JobViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -227,6 +230,12 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
             postedTime = itemView.findViewById(R.id.tv_posted_time);
             distance = itemView.findViewById(R.id.tv_distance);
             bookmarkButton = itemView.findViewById(R.id.bookmarkButton);
+
+            // Bind new views
+            workArrangement = itemView.findViewById(R.id.tv_work_arrangement);
+            workArrangementCard = itemView.findViewById(R.id.workArrangementCard);
+            distanceCard = itemView.findViewById(R.id.distanceCard);
+            jobTypeCard = itemView.findViewById(R.id.jobTypeRow).findViewById(R.id.jobTypeCard);
         }
     }
 }

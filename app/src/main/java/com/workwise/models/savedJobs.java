@@ -1,8 +1,13 @@
 package com.workwise.models;
 
+import com.google.gson.annotations.SerializedName;
+
 public class savedJobs {
+    @SerializedName("savedJobId")
     private int savedJobId;
+    @SerializedName("userId")
     private int userId;
+    @SerializedName("jobTitle")
     private String jobTitle;
     private String companyName;
     private String jobLocation;
