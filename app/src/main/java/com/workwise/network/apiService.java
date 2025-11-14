@@ -27,17 +27,16 @@ public interface apiService {
             @Header("X-Endpoint-Token") String token
     );
 
-    // --- FIXES APPLIED HERE ---
     @PUT("v1/workwise/profile/{user_id}")
     Call<UserProfileOut> updateProfile(@Path("user_id") int userId,
                                        @Body UpdateProfileIn body,
                                        @Header("X-Endpoint-Token") String endpointToken);
 
-    // POST upload image
+    // --- FIXED: URL now includes {user_id} and uses @Path ---
     @Multipart
-    @POST("v1/workwise/profile/image")
+    @POST("v1/workwise/profile/{user_id}/image")
     Call<ProfileImageUploadResponse> uploadProfileImage(
-            @Query("user_id") int userId,
+            @Path("user_id") int userId,
             @Part MultipartBody.Part file,
             @Header("X-Endpoint-Token") String token
     );
@@ -103,13 +102,34 @@ public interface apiService {
     @DELETE("v1/workwise/saved-jobs/{user_id}/{saved_job_id}")
     Call<apiResponse> deleteSavedJob(@Path("user_id") int userId,
                                      @Path("saved_job_id") int savedJobId,
-                                     @Header("X-Entertainment-Token") String endpointToken);
+                                     @Header("X-Endpoint-Token") String endpointToken);
 
     // ========== JOBS ==========
-    @GET("/v1/workwise/jobs")
-    Call<List<job>> getJobs(
-            @Header("X-Endpoint-Token") String endpointToken,
-            @Query("limit") int limit
+    @GET("v1/workwise/jobs")
+    Call<List<job>> getActiveJobs(
+            @Header("X-Endpoint-Token") String token,
+            @Query("limit") int limit,
+            @Query("offset") int offset,
+            @Query("employment_type") String employmentType, // New
+            @Query("work_arrangement") String workArrangement, // New
+            @Query("location") String location // New
+    );
+
+    @GET("v1/workwise/jobs/search")
+    Call<List<JobListingResponse>> searchJobs(
+            @Header("X-Endpoint-Token") String token,
+            @Query("query") String query,
+            @Query("employment_type") String employmentType,
+            @Query("work_arrangement") String workArrangement,
+            @Query("location") String location,
+            @Query("limit") int limit,
+            @Query("offset") int offset
+    );
+
+    @GET("v1/workwise/jobs/detail/{job_id}")
+    Call<JobDetailResponse> getJobDetail(
+            @Header("X-Endpoint-Token") String token,
+            @Path("job_id") int jobId
     );
 
     @GET("/v1/workwise/jobs/{job_id}")
@@ -117,6 +137,18 @@ public interface apiService {
             @Header("X-Endpoint-Token") String endpointToken,
             @Path("job_id") int jobId
     );
+
+    // FOR THE 'JOB SEARCH' PAGE
+    @GET("v1/workwise/jobs/search")
+    Call<List<job>> searchJobs(
+            @Header("X-Endpoint-Token") String token,
+            @Query("query") String query,
+            @Query("employment_type") String employmentType,
+            @Query("work_arrangement") String workArrangement,
+            @Query("limit") int limit,
+            @Query("offset") int offset
+    );
+
 
     @POST("v1/workwise/forgot-password")
     Call<forgotPasswordOut> forgotPassword(@Body forgotPasswordIn body,
@@ -132,4 +164,6 @@ public interface apiService {
     Call<resetPasswordOut> resetPassword(@Body resetPasswordIn body,
                                          @Header("X-Endpoint-Token") String endpointToken,
                                          @Header("Accept") String accept);
+
+
 }

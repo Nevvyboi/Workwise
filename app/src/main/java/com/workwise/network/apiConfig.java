@@ -30,6 +30,7 @@ public final class apiConfig {
 
     // Jobs tokens
     public static final String tokenJobsList = "REDACTED-ENDPOINT-TOKEN";
+    public static final String tokenJobSearch = "REDACTED-ENDPOINT-TOKEN";
 
     // Saved Jobs tokens
     public static final String tokenSavedList = "REDACTED-ENDPOINT-TOKEN";
