@@ -29,7 +29,8 @@ public final class apiConfig {
     public static final String tokenStats = "STATSTOK789";
 
     // Jobs tokens
-    public static final String tokenJobsList = "JOBLISTTOK111";
+    public static final String tokenJobsList = "JOBLISTTOK333";
+    public static final String tokenJobSearch = "JOBSEARCHTOK555";
 
     // Saved Jobs tokens
     public static final String tokenSavedList = "SAVEDLISTTOK012";

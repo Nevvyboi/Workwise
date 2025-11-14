@@ -1,6 +1,5 @@
 package com.workwise;
 
-import com.workwise.ui.bottomNav;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -8,6 +7,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.tabs.TabLayout;
+import com.workwise.ui.bottomNav;
 
 public class community extends bottomNav {
 

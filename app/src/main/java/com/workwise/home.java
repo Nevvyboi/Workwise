@@ -3,24 +3,23 @@ package com.workwise;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 import com.workwise.cv.managecv;
-import com.workwise.ui.bottomNav;
+import com.workwise.jobs.JobSearchActivity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.workwise.ui.bottomNav;
+
 import android.view.View;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
 
 public class home extends bottomNav {
 
@@ -165,12 +164,21 @@ public class home extends bottomNav {
         // Smart Quick Actions
         MaterialCardView jobSearchCard = findViewById(R.id.jobSearchCard);
         if (jobSearchCard != null) {
-            jobSearchCard.setOnClickListener(v -> showJobMatchingEngine());
+            // --- 2. CHANGE THIS ---
+            // OLD: jobSearchCard.setOnClickListener(v -> showJobMatchingEngine());
+            jobSearchCard.setOnClickListener(v -> {
+                Intent intent = new Intent(home.this, JobSearchActivity.class);
+                startActivity(intent);
+            });
+            // --- END CHANGE ---
         }
 
         MaterialCardView cvBuilderCard = findViewById(R.id.cvBuilderCard);
         if (cvBuilderCard != null) {
-            cvBuilderCard.setOnClickListener(v -> showCareerBooster());
+            // This is just a placeholder, your code for this is more complex
+            // cvBuilderCard.setOnClickListener(v -> showCareerBooster());
+            // This line from your file seems more direct:
+            cvBuilderCard.setOnClickListener(v -> navigateToCV());
         }
 
         MaterialCardView interviewCard = findViewById(R.id.interviewCard);
@@ -216,7 +224,7 @@ public class home extends bottomNav {
         int focusIndex = dayOfWeek % focusTasks.length;
 
         new MaterialAlertDialogBuilder(this)
-                .setTitle("🎯 Today's Career Focus")
+                .setTitle("Today's Career Focus")
                 .setMessage(focusTasks[focusIndex] + "\n\n" + taskDescriptions[focusIndex])
                 .setPositiveButton("Let's Do This!", (dialog, which) -> {
                     executeDailyFocus(focusIndex);
@@ -259,12 +267,12 @@ public class home extends bottomNav {
 
     private void showAllCareerFocusOptions() {
         String[] options = {
-                "🎯 Job Applications Sprint",
-                "📝 Profile Power-Up",
-                "🎤 Interview Mastery",
-                "📊 Skill Development",
-                "🏢 Company Research",
-                "💰 Salary Intelligence"
+                "Job Applications Sprint",
+                "Profile Power-Up",
+                "Interview Mastery",
+                "Skill Development",
+                "Company Research",
+                "Salary Intelligence"
         };
 
         new MaterialAlertDialogBuilder(this)
@@ -277,7 +285,7 @@ public class home extends bottomNav {
     }
 
     private void showJobMatchingEngine() {
-        String matchMessage = "🎯 AI Job Matching\n\n" +
+        String matchMessage = "AI Job Matching\n\n" +
                 "Based on your profile:\n" +
                 "• 12 Perfect Matches (95%+ fit)\n" +
                 "• 28 Strong Matches (85%+ fit)\n" +
@@ -299,12 +307,12 @@ public class home extends bottomNav {
 
     private void showCareerBooster() {
         String[] boosterOptions = {
-                "✨ Profile Completeness: " + profileCompleteness + "%",
-                "📄 Smart CV Builder",
-                "🎯 Cover Letter Generator",
-                "💼 Portfolio Showcase",
-                "🌟 Achievement Highlighter",
-                "📈 Career Progression Path"
+                "Profile Completeness: " + profileCompleteness + "%",
+                "Smart CV Builder",
+                "Cover Letter Generator",
+                "Portfolio Showcase",
+                "Achievement Highlighter",
+                "Career Progression Path"
         };
 
         new MaterialAlertDialogBuilder(this)
@@ -336,12 +344,12 @@ public class home extends bottomNav {
 
     private void launchInterviewSimulator() {
         String[] simulatorOptions = {
-                "🎥 Video Interview Practice",
-                "💬 Common Questions Drill",
-                "🎯 STAR Method Builder",
-                "🧠 Behavioral Questions",
-                "💡 Technical Interview Prep",
-                "📊 Mock Interview (20 min)"
+                "Video Interview Practice",
+                "Common Questions Drill",
+                "STAR Method Builder",
+                "Behavioral Questions",
+                "Technical Interview Prep",
+                "Mock Interview (20 min)"
         };
 
         new MaterialAlertDialogBuilder(this)
@@ -380,12 +388,12 @@ public class home extends bottomNav {
 
     private void showSkillGapAnalysis() {
         String[] analysisOptions = {
-                "🎯 Skills Gap Analysis",
-                "📊 Market Demand Insights",
-                "🏆 Skill Certification Paths",
-                "💪 Quick Skill Assessments",
-                "📚 Recommended Courses",
-                "🌟 Industry Skill Trends"
+                "Skills Gap Analysis",
+                "Market Demand Insights",
+                "Skill Certification Paths",
+                "Quick Skill Assessments",
+                "Recommended Courses",
+                "Industry Skill Trends"
         };
 
         new MaterialAlertDialogBuilder(this)
@@ -418,12 +426,12 @@ public class home extends bottomNav {
     private void analyzeSkillGap() {
         String gapMessage = "📊 Your Skill Analysis\n\n" +
                 "Strong Skills:\n" +
-                "✅ Communication (Advanced)\n" +
-                "✅ Microsoft Office (Intermediate)\n\n" +
+                "Communication (Advanced)\n" +
+                "Microsoft Office (Intermediate)\n\n" +
                 "Skills to Develop:\n" +
-                "⚠️ Data Analysis (Entry Level)\n" +
-                "⚠️ Project Management (Beginner)\n\n" +
-                "🎯 Hot Skills in Your Industry:\n" +
+                "Data Analysis (Entry Level)\n" +
+                "Project Management (Beginner)\n\n" +
+                "Hot Skills in Your Industry:\n" +
                 "• Digital Marketing\n" +
                 "• Customer Relationship Management\n" +
                 "• Agile Methodologies";
@@ -443,15 +451,15 @@ public class home extends bottomNav {
 
     private void showCareerHub() {
         String[] hubOptions = {
-                "📊 Career Dashboard",
-                "💼 Application Tracker",
-                "🎯 My Job Matches (" + (12 + (int)(Math.random() * 10)) + " new)",
-                "🏆 Achievements & Badges",
-                "📈 Career Insights",
-                "🔔 Smart Notifications",
-                "🤝 Networking Hub",
-                "💡 Career Advisor AI",
-                "⚙️ Settings"
+                "Career Dashboard",
+                "Application Tracker",
+                "My Job Matches (" + (12 + (int)(Math.random() * 10)) + " new)",
+                "Achievements & Badges",
+                "Career Insights",
+                "Smart Notifications",
+                "Networking Hub",
+                "Career Advisor AI",
+                "Settings"
         };
 
         new MaterialAlertDialogBuilder(this)
@@ -496,15 +504,15 @@ public class home extends bottomNav {
         int profileViews = prefs.getInt("profile_views", 23);
         int savedJobs = prefs.getInt("saved_jobs", 5);
 
-        String dashboardInfo = "📊 Your Career Stats\n\n" +
+        String dashboardInfo = "Your Career Stats\n\n" +
                 "This Week:\n" +
-                "📝 Applications Sent: " + applicationsCount + "\n" +
-                "👀 Profile Views: " + profileViews + "\n" +
-                "⭐ Saved Jobs: " + savedJobs + "\n" +
-                "🔥 Login Streak: " + dailyStreak + " days\n\n" +
+                "Applications Sent: " + applicationsCount + "\n" +
+                "Profile Views: " + profileViews + "\n" +
+                "Saved Jobs: " + savedJobs + "\n" +
+                "Login Streak: " + dailyStreak + " days\n\n" +
                 "Profile Strength: " + profileCompleteness + "%\n" +
                 "Match Score: " + (profileCompleteness > 70 ? "Excellent" : "Good") + "\n\n" +
-                "🎯 Goal: Apply to 10 jobs this week!\n" +
+                "Goal: Apply to 10 jobs this week!\n" +
                 "Progress: " + applicationsCount + "/10";
 
         new MaterialAlertDialogBuilder(this)
@@ -519,11 +527,11 @@ public class home extends bottomNav {
 
     private void showApplicationTracker() {
         String[] appStatuses = {
-                "📤 Sent (5 applications)",
-                "📥 Under Review (3 applications)",
-                "🎯 Shortlisted (1 application)",
-                "🎤 Interview Scheduled (0)",
-                "❌ Not Selected (2 applications)"
+                "Sent (5 applications)",
+                "Under Review (3 applications)",
+                "Shortlisted (1 application)",
+                "Interview Scheduled (0)",
+                "Not Selected (2 applications)"
         };
 
         new MaterialAlertDialogBuilder(this)
@@ -540,17 +548,17 @@ public class home extends bottomNav {
     private void showAchievements() {
         String achievementsMsg = "🏆 Your Achievements\n\n" +
                 "Unlocked:\n" +
-                "✅ First Login\n" +
-                "✅ Profile Created\n" +
-                "✅ " + dailyStreak + " Day Streak\n\n" +
+                "First Login\n" +
+                "Profile Created\n" +
+                "" + dailyStreak + " Day Streak\n\n" +
                 "In Progress:\n" +
-                "🔒 Apply to 10 Jobs (Progress: 40%)\n" +
-                "🔒 Complete Profile (Progress: " + profileCompleteness + "%)\n" +
-                "🔒 Interview Master (0/5 practices)\n\n" +
+                "Apply to 10 Jobs (Progress: 40%)\n" +
+                "Complete Profile (Progress: " + profileCompleteness + "%)\n" +
+                "Interview Master (0/5 practices)\n\n" +
                 "Coming Soon:\n" +
-                "⭐ Job Offer Received\n" +
-                "⭐ 30 Day Streak\n" +
-                "⭐ Networking Pro";
+                "Job Offer Received\n" +
+                "30 Day Streak\n" +
+                "Networking Pro";
 
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Achievements & Badges")
@@ -563,16 +571,16 @@ public class home extends bottomNav {
     }
 
     private void showCareerInsights() {
-        String insightsMsg = "📈 Career Market Insights\n\n" +
-                "🔥 Trending Jobs This Week:\n" +
+        String insightsMsg = "Career Market Insights\n\n" +
+                "Trending Jobs This Week:\n" +
                 "1. Digital Marketing Manager (+15%)\n" +
                 "2. Data Analyst (+12%)\n" +
                 "3. Software Developer (+8%)\n\n" +
-                "💰 Salary Trends:\n" +
+                "Salary Trends:\n" +
                 "• Entry Level: R8,000 - R15,000\n" +
                 "• Mid Level: R20,000 - R35,000\n" +
                 "• Senior Level: R40,000 - R80,000\n\n" +
-                "🎯 Top Hiring Companies:\n" +
+                "Top Hiring Companies:\n" +
                 "• TechCorp SA\n" +
                 "• Innovation Hub\n" +
                 "• Future Enterprises";
@@ -589,16 +597,16 @@ public class home extends bottomNav {
 
     private void showNotifications() {
         String[] notifications = {
-                "🎯 12 new jobs match your profile!",
-                "👀 3 companies viewed your profile today",
-                "⭐ Your profile completeness increased to " + profileCompleteness + "%",
-                "💡 Tip: Update your CV to boost visibility by 40%",
-                "🔥 You're on a " + dailyStreak + " day streak! Keep it up!",
-                "📊 New skill assessment available: Digital Marketing"
+                "12 new jobs match your profile!",
+                "3 companies viewed your profile today",
+                "Your profile completeness increased to " + profileCompleteness + "%",
+                "Tip: Update your CV to boost visibility by 40%",
+                "You're on a " + dailyStreak + " day streak! Keep it up!",
+                "New skill assessment available: Digital Marketing"
         };
 
         new MaterialAlertDialogBuilder(this)
-                .setTitle("🔔 Notifications")
+                .setTitle("Notifications")
                 .setItems(notifications, (dialog, which) -> {
                     handleNotificationClick(which);
                 })
@@ -630,7 +638,7 @@ public class home extends bottomNav {
     }
 
     private void launchCareerAdvisorAI() {
-        String advisorMsg = "🤖 AI Career Advisor\n\n" +
+        String advisorMsg = "AI Career Advisor\n\n" +
                 "I'm your personal career coach! I can help you with:\n\n" +
                 "• Job search strategies\n" +
                 "• Resume optimization\n" +
@@ -659,12 +667,12 @@ public class home extends bottomNav {
                 "Profile Views (7 days): 23 (+15%)\n" +
                 "Search Appearances: 45\n" +
                 "Match Score: " + (profileCompleteness > 70 ? "Excellent ⭐⭐⭐" : "Good ⭐⭐") + "\n\n" +
-                "💡 Boost Your Profile:\n" +
+                "Boost Your Profile:\n" +
                 (profileCompleteness < 100 ? "• Complete missing sections\n" : "") +
                 "• Add professional photo\n" +
                 "• Get skill endorsements\n" +
                 "• Update your CV regularly\n\n" +
-                "🎯 Profiles with photos get 3x more views!";
+                "Profiles with photos get 3x more views!";
 
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Profile Insights")
@@ -687,7 +695,7 @@ public class home extends bottomNav {
                 (prefs.contains("skills_added") ? "✅" : "⬜") + " Skills & Expertise",
                 (prefs.contains("experience_added") ? "✅" : "⬜") + " Work Experience",
                 (prefs.contains("education_added") ? "✅" : "⬜") + " Education",
-                "⬜ Professional Photo"
+                "Professional Photo"
         };
 
         new MaterialAlertDialogBuilder(this)
@@ -704,9 +712,17 @@ public class home extends bottomNav {
     // Helper navigation methods
     private void navigateToJobsWithFilter(String filter) {
         try {
-            Intent intent = new Intent(this, nearme.class);
-            intent.putExtra("filter", filter);
-            startActivity(intent);
+            // If the filter is 'all' or 'matches', go to the new search page
+            if ("all".equals(filter) || "matches".equals(filter) || "quick_apply".equals(filter)) {
+                Intent intent = new Intent(this, JobSearchActivity.class);
+                intent.putExtra("filter", filter); // The search page can optionally use this
+                startActivity(intent);
+            } else {
+                // Otherwise, go to the map
+                Intent intent = new Intent(this, nearme.class);
+                intent.putExtra("filter", filter);
+                startActivity(intent);
+            }
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         } catch (Exception e) {
             Toast.makeText(this, "Opening jobs...", Toast.LENGTH_SHORT).show();
@@ -788,7 +804,7 @@ public class home extends bottomNav {
 
     private void showQuickCareerTips() {
         String[] tips = getRandomCareerTips();
-        String tipsMessage = "💡 Quick Career Tips:\n\n" +
+        String tipsMessage = "Quick Career Tips:\n\n" +
                 "1. " + tips[0] + "\n\n" +
                 "2. " + tips[1] + "\n\n" +
                 "3. " + tips[2];

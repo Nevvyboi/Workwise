@@ -399,7 +399,14 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
 
     private void loadJobsFromApi() {
         apiService api = apiClient.get().create(apiService.class);
-        Call<List<job>> call = api.getJobs(apiConfig.tokenJobsList, JOB_LIMIT);
+        Call<List<job>> call = api.getActiveJobs(
+                apiConfig.tokenJobsList, // Corrected spelling
+                JOB_LIMIT,               // limit
+                0,                       // offset
+                null,                    // employmentType (no filter on initial load)
+                null,                    // workArrangement (no filter on initial load)
+                null                     // location (no filter on initial load)
+        );
 
         call.enqueue(new Callback<List<job>>() {
             @Override

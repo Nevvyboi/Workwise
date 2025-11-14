@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -37,10 +38,11 @@ public class settingsviewsavedjobs extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // ... (unchanged) ...
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.settingsviewsavedjobs);
 
-        // Get user ID from SharedPreferences
         prefs = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
         userId = prefs.getInt("user_id", -1);
 
@@ -52,31 +54,55 @@ public class settingsviewsavedjobs extends AppCompatActivity {
 
         initializeViews();
         setupClickListeners();
-        loadSavedJobs();
     }
 
     private void initializeViews() {
+        // ... (unchanged) ...
         backButton = findViewById(R.id.backButton);
         emptyStateCard = findViewById(R.id.emptyStateCard);
         savedJobsContainer = findViewById(R.id.savedJobsContainer);
     }
 
     private void setupClickListeners() {
-        backButton.setOnClickListener(v -> finish());
+        // ... (unchanged) ...
+        if (backButton != null) {
+            backButton.setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
+        }
     }
 
     private void loadSavedJobs() {
-        // Show loading state
-        emptyStateCard.setVisibility(View.GONE);
-        savedJobsContainer.setVisibility(View.GONE);
+        // ... (previous null checks are still here) ...
+        if (emptyStateCard != null) {
+            emptyStateCard.setVisibility(View.GONE);
+        }
+        if (savedJobsContainer != null) {
+            savedJobsContainer.setVisibility(View.GONE);
+        }
 
-        apiService api = apiClient.get().create(apiService.class);
+        // --- START CHANGE ---
+        apiService api = null; // Initialize as null
+        try {
+            api = apiClient.get().create(apiService.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // ADDED: Check if API initialization failed
+        if (api == null) {
+            Toast.makeText(this, "Error initializing API. Please restart.", Toast.LENGTH_LONG).show();
+            showEmptyState(); // Show the empty state as we can't load
+            return;
+        }
+        // --- END CHANGE ---
+
         Call<List<savedJobs>> call = api.getSavedJobs(userId, apiConfig.tokenSavedList);
 
         call.enqueue(new Callback<List<savedJobs>>() {
             @Override
             public void onResponse(@NonNull Call<List<savedJobs>> call,
                                    @NonNull Response<List<savedJobs>> response) {
+                // ... (rest of method unchanged) ...
+                if (isFinishing() || isDestroyed()) return;
                 if (!response.isSuccessful()) {
                     Toast.makeText(settingsviewsavedjobs.this,
                             "Failed to load saved jobs: " + response.code(),
@@ -84,7 +110,6 @@ public class settingsviewsavedjobs extends AppCompatActivity {
                     showEmptyState();
                     return;
                 }
-
                 List<savedJobs> jobs = response.body();
                 if (jobs == null || jobs.isEmpty()) {
                     showEmptyState();
@@ -92,10 +117,11 @@ public class settingsviewsavedjobs extends AppCompatActivity {
                     populateSavedJobs(jobs);
                 }
             }
-
             @Override
             public void onFailure(@NonNull Call<List<savedJobs>> call,
                                   @NonNull Throwable t) {
+                // ... (rest of method unchanged) ...
+                if (isFinishing() || isDestroyed()) return;
                 Toast.makeText(settingsviewsavedjobs.this,
                         "Error: " + t.getMessage(),
                         Toast.LENGTH_SHORT).show();
@@ -105,19 +131,23 @@ public class settingsviewsavedjobs extends AppCompatActivity {
     }
 
     private void showEmptyState() {
-        emptyStateCard.setVisibility(View.VISIBLE);
-        savedJobsContainer.setVisibility(View.GONE);
+        // ... (unchanged) ...
+        if (emptyStateCard != null) {
+            emptyStateCard.setVisibility(View.VISIBLE);
+        }
+        if (savedJobsContainer != null) {
+            savedJobsContainer.setVisibility(View.GONE);
+        }
     }
 
     private void populateSavedJobs(List<savedJobs> jobs) {
-        // Clear existing views
+        // ... (unchanged) ...
+        if (savedJobsContainer == null) return;
         savedJobsContainer.removeAllViews();
-
-        // Hide empty state
-        emptyStateCard.setVisibility(View.GONE);
+        if (emptyStateCard != null) {
+            emptyStateCard.setVisibility(View.GONE);
+        }
         savedJobsContainer.setVisibility(View.VISIBLE);
-
-        // Add job cards
         for (savedJobs job : jobs) {
             View jobCard = createJobCard(job);
             savedJobsContainer.addView(jobCard);
@@ -125,11 +155,10 @@ public class settingsviewsavedjobs extends AppCompatActivity {
     }
 
     private View createJobCard(savedJobs job) {
+        // ... (unchanged) ...
         LayoutInflater inflater = LayoutInflater.from(this);
         MaterialCardView cardView = (MaterialCardView) inflater.inflate(
                 R.layout.itemsavedjob, savedJobsContainer, false);
-
-        // Get views from card
         TextView tvJobTitle = cardView.findViewById(R.id.tv_saved_job_title);
         TextView tvCompanyName = cardView.findViewById(R.id.tv_saved_company_name);
         TextView tvLocationInfo = cardView.findViewById(R.id.tv_saved_location_info);
@@ -137,67 +166,61 @@ public class settingsviewsavedjobs extends AppCompatActivity {
         TextView tvSavedDate = cardView.findViewById(R.id.tv_saved_date);
         MaterialButton btnView = cardView.findViewById(R.id.btn_view_saved_job);
         MaterialButton btnRemove = cardView.findViewById(R.id.btn_remove_saved_job);
-
-        // Set data
         tvJobTitle.setText(job.getJobTitle());
         tvCompanyName.setText(job.getCompanyName());
-
         String locationInfo = job.getJobLocation() != null ? job.getJobLocation() : "Location not specified";
         tvLocationInfo.setText(locationInfo);
-
         String salary = job.getSalaryRange() != null ? job.getSalaryRange() : "Salary not disclosed";
         tvSalary.setText(salary);
-
         String savedDate = job.getSavedAt() != null ? "Saved: " + formatDate(job.getSavedAt()) : "Recently saved";
         tvSavedDate.setText(savedDate);
-
-        // Set click listeners
         btnView.setOnClickListener(v -> {
-            // TODO: Open job details activity
             Toast.makeText(this, "View job details: " + job.getJobTitle(), Toast.LENGTH_SHORT).show();
         });
-
         btnRemove.setOnClickListener(v -> {
             removeSavedJob(job, cardView);
         });
-
         return cardView;
     }
 
     private void removeSavedJob(savedJobs job, View cardView) {
+        // ... (unchanged) ...
         apiService api = apiClient.get().create(apiService.class);
+        // ADDED: api null check
+        if (api == null) {
+            Toast.makeText(this, "Error: API not available.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Call<apiResponse> call = api.deleteSavedJob(
                 userId,
                 job.getSavedJobId(),
                 apiConfig.tokenSavedDelete
         );
-
         call.enqueue(new Callback<apiResponse>() {
             @Override
             public void onResponse(@NonNull Call<apiResponse> call,
                                    @NonNull Response<apiResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
                 if (response.isSuccessful()) {
-                    // Remove card from view with animation
-                    savedJobsContainer.removeView(cardView);
-
+                    if (savedJobsContainer != null) {
+                        savedJobsContainer.removeView(cardView);
+                        if (savedJobsContainer.getChildCount() == 0) {
+                            showEmptyState();
+                        }
+                    }
                     Toast.makeText(settingsviewsavedjobs.this,
                             "Job removed from saved",
                             Toast.LENGTH_SHORT).show();
-
-                    // Check if container is now empty
-                    if (savedJobsContainer.getChildCount() == 0) {
-                        showEmptyState();
-                    }
                 } else {
                     Toast.makeText(settingsviewsavedjobs.this,
                             "Failed to remove job",
                             Toast.LENGTH_SHORT).show();
                 }
             }
-
             @Override
             public void onFailure(@NonNull Call<apiResponse> call,
                                   @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) return;
                 Toast.makeText(settingsviewsavedjobs.this,
                         "Error: " + t.getMessage(),
                         Toast.LENGTH_SHORT).show();
@@ -206,13 +229,11 @@ public class settingsviewsavedjobs extends AppCompatActivity {
     }
 
     private String formatDate(String isoDate) {
-        // Simple date formatting - you can enhance this
+        // ... (unchanged) ...
         if (isoDate == null || isoDate.isEmpty()) {
             return "Recently";
         }
-
         try {
-            // Extract just the date part (YYYY-MM-DD)
             if (isoDate.contains("T")) {
                 String datePart = isoDate.split("T")[0];
                 String[] parts = datePart.split("-");
@@ -223,14 +244,12 @@ public class settingsviewsavedjobs extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return "Recently";
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh saved jobs when activity resumes
         loadSavedJobs();
     }
 }
