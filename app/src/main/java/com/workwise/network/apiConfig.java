@@ -2,7 +2,7 @@ package com.workwise.network;
 
 public final class apiConfig {
 
-    public static final String baseUrl = "https://workwiseweb-production.up.railway.app/";
+    public static final String baseUrl = "http://192.168.1.158:8000/";
 
     // Authentication tokens
     public static final String tokenRegister = "USNACCTOK123";
@@ -39,6 +39,17 @@ public final class apiConfig {
     public static final String tokenForgotPassword = "FORGOTPWDTOK123";
     public static final String tokenVerifyResetCode = "VERIFYCODETOK456";
     public static final String tokenResetPassword = "RESETPWDTOK789";
+
+    public static final String tokenChatCreate   = "CHATCREATETOK111";
+    public static final String tokenChatList     = "CHATLISTTOK222";
+    public static final String tokenChatMsgList  = "CHATMSGLISTTOK333";
+    public static final String tokenChatMsgSend  = "CHATMSGSENDTOK444";
+
+    public static String getWssBase() {
+        if (baseUrl.startsWith("https://")) return "wss://" + baseUrl.substring("https://".length());
+        if (baseUrl.startsWith("http://"))  return "ws://"  + baseUrl.substring("http://".length());
+        return baseUrl; // fallback if already ws(s)
+    }
 
     private apiConfig() {}
 }
