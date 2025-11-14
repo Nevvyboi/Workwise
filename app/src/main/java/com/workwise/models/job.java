@@ -1,44 +1,48 @@
 package com.workwise.models;
 
+import com.google.gson.annotations.SerializedName;
+
 public class job {
+
+    @SerializedName("jobId")
     private int jobId;
+
+    @SerializedName("jobTitle")
     private String jobTitle;
-    private String companyName;
-    private String jobLocation;
+
+    @SerializedName("description")
+    private String description; // Added for saveJob function
+
+    @SerializedName("businessName")
+    private String businessName; // This is the field you were missing
+
+    @SerializedName("location")
+    private String location; // This is the field you were missing
+
+    @SerializedName("salaryRange")
     private String salaryRange;
-    private String jobDescription;
-    private String employmentType;
-    private String postedAt;
 
-    public int getJobId() {
-        return jobId;
-    }
+    @SerializedName("employmentType")
+    private String employmentType; // e.g., "Full-time"
 
-    public String getJobTitle() {
-        return jobTitle;
-    }
+    @SerializedName("workArrangement")
+    private String workArrangement; // e.g., "Hybrid"
 
-    public String getCompanyName() {
-        return companyName;
-    }
+    @SerializedName("datePosted")
+    private String datePosted;
 
-    public String getJobLocation() {
-        return jobLocation;
-    }
+    // --- Getters ---
 
-    public String getSalaryRange() {
-        return salaryRange;
-    }
+    public int getJobId() { return jobId; }
+    public String getJobTitle() { return jobTitle; }
+    public String getDescription() { return description; }
 
-    public String getJobDescription() {
-        return jobDescription;
-    }
+    // These methods now exist and will fix your errors
+    public String getCompanyName() { return businessName; }
+    public String getJobLocation() { return location; }
 
-    public String getEmploymentType() {
-        return employmentType;
-    }
-
-    public String getPostedAt() {
-        return postedAt;
-    }
+    public String getSalaryRange() { return salaryRange; }
+    public String getEmploymentType() { return employmentType; }
+    public String getWorkArrangement() { return workArrangement; }
+    public String getDatePosted() { return datePosted; } // Use this, not getPostedAt()
 }
