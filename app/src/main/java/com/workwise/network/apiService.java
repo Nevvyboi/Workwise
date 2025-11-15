@@ -138,6 +138,40 @@ public interface apiService {
             @Path("job_id") int jobId
     );
 
+    // ========== JOBS (UPDATED) ==========
+    @GET("v1/workwise/jobs")
+    Call<List<JobListingResponse>> getAllJobs(
+            @Header("X-Endpoint-Token") String token,
+            @Query("limit") int limit,
+            @Query("offset") int offset
+    );
+
+    @GET("v1/workwise/jobs")
+    Call<List<JobListingResponse>> getJobsByType(
+            @Header("X-Endpoint-Token") String token,
+            @Query("employment_type") String employmentType,
+            @Query("limit") int limit,
+            @Query("offset") int offset
+    );
+
+    @GET("v1/workwise/jobs")
+    Call<List<JobListingResponse>> getJobsByArrangement(
+            @Header("X-Endpoint-Token") String token,
+            @Query("work_arrangement") String workArrangement,
+            @Query("limit") int limit,
+            @Query("offset") int offset
+    );
+
+    @GET("v1/workwise/jobs")
+    Call<List<JobListingResponse>> getFilteredJobs(
+            @Header("X-Endpoint-Token") String token,
+            @Query("employment_type") String employmentType,
+            @Query("work_arrangement") String workArrangement,
+            @Query("limit") int limit,
+            @Query("offset") int offset
+    );
+
+
     // FOR THE 'JOB SEARCH' PAGE
     @GET("v1/workwise/jobs/search")
     Call<List<job>> searchJobs(

@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.INTERNET"/>
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission
+        android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
     <application
@@ -32,10 +40,18 @@
             android:name=".authentication"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action
+                    android:name="android.intent.action.MAIN" />
+                <category
+                    android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".AvailableJobsActivity"
+            android:exported="false"
+            android:label="Available Jobs" />
+
 
         <activity
             android:name="com.workwise.home"
@@ -57,19 +73,26 @@
             android:exported="true"
             android:launchMode="singleTop"/>
 
-        <activity android:name="com.workwise.settings.settingsprofile"/>
+        <activity
+            android:name="com.workwise.settings.settingsprofile"/>
 
-        <activity android:name="com.workwise.cv.managecv" />
-
+        <activity
+            android:name="com.workwise.settings.settingsmanagecv"
+            android:exported="false"/>
         <activity
             android:name="com.workwise.settings.settingsqualifications"
             android:windowSoftInputMode="adjustResize|stateHidden"/>
 
-        <activity android:name="com.workwise.settings.settingsviewsavedjobs" />
+        <activity
+            android:name="com.workwise.settings.settingsviewsavedjobs"
+            android:exported="false" />
 
-        <activity android:name=".email.forgotPassword"/>
-        <activity android:name=".email.resetPassword"/>
-        <activity android:name=".email.verifyResetCode"/>
+        <activity
+            android:name=".email.forgotPassword"/>
+        <activity
+            android:name=".email.resetPassword"/>
+        <activity
+            android:name=".email.verifyResetCode"/>
 
         <activity
             android:name="com.workwise.pdfviewer.pdfviewer"

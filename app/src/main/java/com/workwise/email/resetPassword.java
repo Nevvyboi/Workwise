@@ -1,8 +1,12 @@
 package com.workwise.email;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,13 +47,11 @@ public class resetPassword extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.resetpassword);
 
-        api = apiClient.get().create(apiService.class);
-
-        // Get email and code from intent
-        email = getIntent().getStringExtra("email");
-        code = getIntent().getStringExtra("code");
-        
-        if (email == null || code == null) {
+        try {
+            api = apiClient.get().create(apiService.class);
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating API service", e);
+            Toast.makeText(this, "Error initializing API. Please restart.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
@@ -65,12 +67,20 @@ public class resetPassword extends AppCompatActivity {
         inputPassword = findViewById(R.id.inputPassword);
         inputConfirmPassword = findViewById(R.id.inputConfirmPassword);
         resetButton = findViewById(R.id.resetButton);
+
+        if (backButton == null) Log.e(TAG, "backButton not found");
+        if (passwordLayout == null) Log.e(TAG, "passwordLayout not found");
+        if (confirmPasswordLayout == null) Log.e(TAG, "confirmPasswordLayout not found");
+        if (resetButton == null) Log.e(TAG, "resetButton not found");
     }
 
     private void setupListeners() {
-        backButton.setOnClickListener(v -> finish());
-        
-        resetButton.setOnClickListener(v -> resetPassword());
+        if (backButton != null) {
+            backButton.setOnClickListener(v -> finish());
+        }
+        if (resetButton != null) {
+            resetButton.setOnClickListener(v -> resetPassword());
+        }
     }
 
     private void resetPassword() {
@@ -104,6 +114,12 @@ public class resetPassword extends AppCompatActivity {
         setLoading(true);
 
         resetPasswordIn body = new resetPasswordIn(email, code, password);
+
+        if (api == null) {
+            Toast.makeText(this, "API Error", Toast.LENGTH_SHORT).show();
+            setLoading(false);
+            return;
+        }
 
         api.resetPassword(body, apiConfig.tokenResetPassword, "application/json")
                 .enqueue(new Callback<resetPasswordOut>() {
