@@ -64,7 +64,7 @@
 
                     <ImageView
                         android:layout_width="120dp"
-                        android:layout_height="120dp"
+                        android.layout_height="120dp"
                         android:layout_marginBottom="24dp"
                         android:src="@android:drawable/ic_menu_save"
                         app:tint="#B0BEC5"

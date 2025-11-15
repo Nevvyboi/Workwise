@@ -14,7 +14,7 @@ public final class apiClient {
 
     private static Retrofit retrofit;
     private static OkHttpClient okHttpClient;
-    private static com.workwise.network.apiService service;
+    private static apiService service;
 
     private apiClient() {}
 
@@ -45,9 +45,9 @@ public final class apiClient {
         return retrofit;
     }
 
-    public static com.workwise.network.apiService service() {
+    public static apiService service() {
         if (service == null) {
-            service = get().create(com.workwise.network.apiService.class);
+            service = get().create(apiService.class);
         }
         return service;
     }
@@ -72,3 +72,4 @@ public final class apiClient {
         }
     }
 }
+

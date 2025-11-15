@@ -31,22 +31,26 @@ public final class apiConfig {
     // Jobs tokens
     public static final String tokenJobsList = "REDACTED-ENDPOINT-TOKEN";
     public static final String tokenJobSearch = "REDACTED-ENDPOINT-TOKEN";
-    public static final String tokenJobsAll = "REDACTED-ENDPOINT-TOKEN";
-    public static final String tokenJobsFilter = "REDACTED-ENDPOINT-TOKEN";
-
 
     // Saved Jobs tokens
     public static final String tokenSavedList = "REDACTED-ENDPOINT-TOKEN";
     public static final String tokenSavedAdd = "REDACTED-ENDPOINT-TOKEN";
     public static final String tokenSavedDelete = "REDACTED-ENDPOINT-TOKEN";
 
-    //Rest Password
     public static final String tokenForgotPassword = "REDACTED-ENDPOINT-TOKEN";
     public static final String tokenVerifyResetCode = "REDACTED-ENDPOINT-TOKEN";
     public static final String tokenResetPassword = "REDACTED-ENDPOINT-TOKEN";
 
+    public static final String tokenChatCreate   = "REDACTED-ENDPOINT-TOKEN";
+    public static final String tokenChatList     = "REDACTED-ENDPOINT-TOKEN";
+    public static final String tokenChatMsgList  = "REDACTED-ENDPOINT-TOKEN";
+    public static final String tokenChatMsgSend  = "REDACTED-ENDPOINT-TOKEN";
 
-
+    public static String getWssBase() {
+        if (baseUrl.startsWith("https://")) return "wss://" + baseUrl.substring("https://".length());
+        if (baseUrl.startsWith("http://"))  return "ws://"  + baseUrl.substring("http://".length());
+        return baseUrl;
+    }
 
     private apiConfig() {}
 }
