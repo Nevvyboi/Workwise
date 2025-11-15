@@ -6,6 +6,17 @@ import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.*;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.POST;
+import retrofit2.http.Header;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
+
+import com.workwise.models.ConversationCreateIn;
+import com.workwise.models.ConversationOut;
+import com.workwise.models.MessageSendIn;
+import com.workwise.models.MessageOut;
 
 public interface apiService {
 
@@ -138,40 +149,6 @@ public interface apiService {
             @Path("job_id") int jobId
     );
 
-    // ========== JOBS (UPDATED) ==========
-    @GET("v1/workwise/jobs")
-    Call<List<JobListingResponse>> getAllJobs(
-            @Header("X-Endpoint-Token") String token,
-            @Query("limit") int limit,
-            @Query("offset") int offset
-    );
-
-    @GET("v1/workwise/jobs")
-    Call<List<JobListingResponse>> getJobsByType(
-            @Header("X-Endpoint-Token") String token,
-            @Query("employment_type") String employmentType,
-            @Query("limit") int limit,
-            @Query("offset") int offset
-    );
-
-    @GET("v1/workwise/jobs")
-    Call<List<JobListingResponse>> getJobsByArrangement(
-            @Header("X-Endpoint-Token") String token,
-            @Query("work_arrangement") String workArrangement,
-            @Query("limit") int limit,
-            @Query("offset") int offset
-    );
-
-    @GET("v1/workwise/jobs")
-    Call<List<JobListingResponse>> getFilteredJobs(
-            @Header("X-Endpoint-Token") String token,
-            @Query("employment_type") String employmentType,
-            @Query("work_arrangement") String workArrangement,
-            @Query("limit") int limit,
-            @Query("offset") int offset
-    );
-
-
     // FOR THE 'JOB SEARCH' PAGE
     @GET("v1/workwise/jobs/search")
     Call<List<job>> searchJobs(
@@ -198,6 +175,33 @@ public interface apiService {
     Call<resetPasswordOut> resetPassword(@Body resetPasswordIn body,
                                          @Header("X-Endpoint-Token") String endpointToken,
                                          @Header("Accept") String accept);
+
+    @POST("/v1/workwise/chats")
+    Call<ConversationOut> createChat(
+            @Header("X-Endpoint-Token") String tok,
+            @Body ConversationCreateIn body
+    );
+
+    @GET("/v1/workwise/chats/{userId}")
+    Call<List<ConversationOut>> listChats(
+            @Header("X-Endpoint-Token") String tok,
+            @Path("userId") int userId
+    );
+
+    @GET("/v1/workwise/chats/{conversationId}/messages")
+    Call<List<MessageOut>> getMessages(
+            @Header("X-Endpoint-Token") String tok,
+            @Path("conversationId") int conversationId,
+            @Query("limit") int limit,
+            @Query("before") Integer before
+    );
+
+    @POST("/v1/workwise/chats/{conversationId}/messages")
+    Call<MessageOut> sendMessage(
+            @Header("X-Endpoint-Token") String tok,
+            @Path("conversationId") int conversationId,
+            @Body MessageSendIn body
+    );
 
 
 }

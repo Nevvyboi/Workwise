@@ -1,39 +1,49 @@
-package com.workwise.cv;
+package com.workwise.cv; // 1. CORRECT PACKAGE
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.workwise.R;
+import com.workwise.models.*;
+import com.workwise.network.*;
+import com.workwise.pdfviewer.pdfviewer;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.util.List;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+// 2. CORRECT CLASS NAME
 public class managecv extends AppCompatActivity {
 
-    private static final String PREFS_NAME = "CVPrefs";
-    private static final String KEY_CV_URI = "cv_uri";
-    private static final String KEY_CV_NAME = "cv_name";
-    private static final String KEY_CV_DATE = "cv_upload_date";
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-    private SharedPreferences preferences;
     private ImageButton backButton;
     private MaterialCardView cvStatusCard;
     private ImageView cvIcon;
@@ -45,32 +55,50 @@ public class managecv extends AppCompatActivity {
     private MaterialButton downloadCvButton;
     private MaterialButton removeCvButton;
 
-    private Uri cvUri;
-    private String cvName;
+    private apiService api;
+    private int userId = -1;
+    private cvItem currentCv = null;
 
-    private final ActivityResultLauncher<Intent> pickPdfLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
+    private final ActivityResultLauncher<String> requestPermission =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    openFilePicker();
+                } else {
+                    Toast.makeText(this, "Permission denied. Please enable storage access in settings.",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+
+    private final ActivityResultLauncher<Intent> pickFile =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    Uri selectedUri = result.getData().getData();
-                    if (selectedUri != null) {
-                        handlePdfSelection(selectedUri);
+                    Uri fileUri = result.getData().getData();
+                    if (fileUri != null) {
+                        uploadCV(fileUri);
                     }
                 }
-            }
-    );
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.settingsmanagecv);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        setContentView(R.layout.settingsmanagecv); // This must match your layout file name
 
-        preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        api = apiClient.get().create(apiService.class);
+
+        SharedPreferences prefs = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
+        userId = prefs.getInt("user_id", -1);
+
+        if (userId == -1) {
+            Toast.makeText(this, "Please log in first", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         initializeViews();
-        loadCvData();
-        setupListeners();
-        updateUI();
+        setupClickListeners();
+        loadUserCVs();
     }
 
     private void initializeViews() {
@@ -86,250 +114,316 @@ public class managecv extends AppCompatActivity {
         removeCvButton = findViewById(R.id.removeCvButton);
     }
 
-    private void loadCvData() {
-        String savedUri = preferences.getString(KEY_CV_URI, null);
-        cvName = preferences.getString(KEY_CV_NAME, null);
-
-        if (savedUri != null) {
-            cvUri = Uri.parse(savedUri);
-        }
+    private void setupClickListeners() {
+        backButton.setOnClickListener(v -> finish());
+        uploadCvButton.setOnClickListener(v -> checkPermissionAndOpenPicker());
+        viewCvButton.setOnClickListener(v -> {
+            if (currentCv != null) viewCV();
+        });
+        downloadCvButton.setOnClickListener(v -> {
+            if (currentCv != null) downloadCV();
+        });
+        removeCvButton.setOnClickListener(v -> {
+            if (currentCv != null) deleteCV();
+        });
     }
 
-    private void setupListeners() {
-        backButton.setOnClickListener(v -> finish());
-
-        uploadCvButton.setOnClickListener(v -> openFilePicker());
-
-        viewCvButton.setOnClickListener(v -> viewCV());
-
-        downloadCvButton.setOnClickListener(v -> downloadCV());
-
-        removeCvButton.setOnClickListener(v -> showRemoveConfirmation());
+    private void checkPermissionAndOpenPicker() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            openFilePicker();
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermission.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
+            } else {
+                openFilePicker();
+            }
+        }
     }
 
     private void openFilePicker() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("application/pdf");
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-        try {
-            pickPdfLauncher.launch(Intent.createChooser(intent, "Select CV (PDF)"));
-        } catch (Exception e) {
-            Toast.makeText(this, "Unable to open file picker", Toast.LENGTH_SHORT).show();
-        }
+        intent.setType("application/pdf");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        pickFile.launch(intent);
     }
 
-    private void handlePdfSelection(Uri uri) {
-        try {
-            // Check file size
-            InputStream inputStream = getContentResolver().openInputStream(uri);
-            if (inputStream != null) {
-                long fileSize = inputStream.available();
-                inputStream.close();
+    private void loadUserCVs() {
+        uploadCvButton.setEnabled(false);
+        Call<List<cvItem>> call = api.getCVs(userId, apiConfig.tokenCvList);
 
-                if (fileSize > MAX_FILE_SIZE) {
-                    Toast.makeText(this, "File too large. Maximum size is 5MB", Toast.LENGTH_LONG).show();
-                    return;
+        call.enqueue(new Callback<List<cvItem>>() {
+            @Override
+            public void onResponse(Call<List<cvItem>> call, Response<List<cvItem>> response) {
+                uploadCvButton.setEnabled(true);
+                if (isFinishing() || isDestroyed()) return;
+
+                if (response.isSuccessful() && response.body() != null) {
+                    List<cvItem> cvs = response.body();
+                    if (!cvs.isEmpty()) {
+                        currentCv = cvs.get(0);
+                        for (cvItem cv : cvs) {
+                            if (cv.isPrimary) {
+                                currentCv = cv;
+                                break;
+                            }
+                        }
+                        updateUIWithCV();
+                    } else {
+                        updateUINoCV();
+                    }
+                } else {
+                    Toast.makeText(managecv.this,
+                            "Failed to load CVs: " + response.message(),
+                            Toast.LENGTH_SHORT).show();
+                    updateUINoCV();
                 }
             }
 
-            // Get file name
-            String fileName = getFileName(uri);
+            @Override
+            public void onFailure(Call<List<cvItem>> call, Throwable t) {
+                if (isFinishing() || isDestroyed()) return;
+                uploadCvButton.setEnabled(true);
+                Toast.makeText(managecv.this,
+                        "Network error: " + t.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+                updateUINoCV();
+            }
+        });
+    }
 
-            // Save CV to internal storage
-            File savedFile = saveCvToInternalStorage(uri, fileName);
-
-            if (savedFile != null) {
-                // Save metadata
-                cvUri = Uri.fromFile(savedFile);
-                cvName = fileName;
-                String currentDate = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(new Date());
-
-                preferences.edit()
-                        .putString(KEY_CV_URI, cvUri.toString())
-                        .putString(KEY_CV_NAME, fileName)
-                        .putString(KEY_CV_DATE, currentDate)
-                        .apply();
-
-                Toast.makeText(this, "CV uploaded successfully", Toast.LENGTH_SHORT).show();
-                updateUI();
-            } else {
-                Toast.makeText(this, "Failed to save CV", Toast.LENGTH_SHORT).show();
+    private void uploadCV(Uri fileUri) {
+        try {
+            String fileName = getFileName(fileUri);
+            if (fileName == null || !fileName.toLowerCase().endsWith(".pdf")) {
+                Toast.makeText(this, "Please select a valid PDF file", Toast.LENGTH_SHORT).show();
+                return;
             }
 
+            uploadCvButton.setEnabled(false);
+            uploadCvButton.setText("Uploading...");
+
+            File tempFile = createTempFileFromUri(fileUri, fileName);
+            if (tempFile == null) {
+                Toast.makeText(this, "Failed to prepare file", Toast.LENGTH_SHORT).show();
+                uploadCvButton.setEnabled(true);
+                uploadCvButton.setText("Upload CV");
+                return;
+            }
+
+            RequestBody requestFile = RequestBody.create(MediaType.parse("application/pdf"), tempFile);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", fileName, requestFile);
+            RequestBody isPrimary = RequestBody.create(MediaType.parse("text/plain"), "true");
+
+            Call<cvUpload> call = api.uploadCV(userId, body, isPrimary, apiConfig.tokenCvUpload);
+
+            call.enqueue(new Callback<cvUpload>() {
+                @Override
+                public void onResponse(Call<cvUpload> call, Response<cvUpload> response) {
+                    if (tempFile.exists()) tempFile.delete();
+                    if (isFinishing() || isDestroyed()) return;
+
+                    uploadCvButton.setEnabled(true);
+                    uploadCvButton.setText("Upload CV");
+
+                    if (response.isSuccessful()) {
+                        Toast.makeText(managecv.this,
+                                "CV uploaded successfully!",
+                                Toast.LENGTH_SHORT).show();
+                        loadUserCVs();
+                    } else {
+                        Toast.makeText(managecv.this,
+                                "Failed to upload CV: " + response.message(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<cvUpload> call, Throwable t) {
+                    if (tempFile.exists()) tempFile.delete();
+                    if (isFinishing() || isDestroyed()) return;
+
+                    uploadCvButton.setEnabled(true);
+                    uploadCvButton.setText("Upload CV");
+                    Toast.makeText(managecv.this,
+                            "Network error: " + t.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+
         } catch (Exception e) {
-            Toast.makeText(this, "Error uploading CV: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            uploadCvButton.setEnabled(true);
+            uploadCvButton.setText("Upload CV");
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    private File saveCvToInternalStorage(Uri uri, String fileName) {
-        try {
-            File cvDir = new File(getFilesDir(), "cvs");
-            if (!cvDir.exists()) {
-                cvDir.mkdirs();
+    private void viewCV() {
+        if (currentCv == null) return;
+
+        String pdfUrl = buildFullUrl(currentCv.filePath);
+        android.util.Log.d("CV_VIEW", "Final PDF URL: " + pdfUrl);
+
+        Intent intent = new Intent(this, pdfviewer.class);
+        intent.putExtra(pdfviewer.EXTRA_PDF_URL, pdfUrl);
+        intent.putExtra(pdfviewer.EXTRA_FILE_NAME, currentCv.cvName);
+        startActivity(intent);
+    }
+
+    private String buildFullUrl(String relativePath) {
+        String pdfUrl = relativePath.replace("\\", "/");
+        if (!pdfUrl.startsWith("http")) {
+            if (pdfUrl.startsWith("/")) pdfUrl = pdfUrl.substring(1);
+            String baseUrl = apiConfig.baseUrl;
+            if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            pdfUrl = baseUrl + "/" + pdfUrl;
+        }
+        return pdfUrl;
+    }
+
+    private void downloadCV() {
+        Toast.makeText(this, "Opening CV viewer...", Toast.LENGTH_SHORT).show();
+        viewCV();
+    }
+
+    private void deleteCV() {
+        if (currentCv == null) return;
+
+        new AlertDialog.Builder(this)
+                .setTitle("Remove CV")
+                .setMessage("Are you sure you want to remove this CV?")
+                .setPositiveButton("Remove", (dialog, which) -> {
+                    performDelete();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void performDelete() {
+        removeCvButton.setEnabled(false);
+        Call<apiResponse> call = api.deleteCV(userId, currentCv.cvId, apiConfig.tokenCvDelete);
+
+        call.enqueue(new Callback<apiResponse>() {
+            @Override
+            public void onResponse(Call<apiResponse> call, Response<apiResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+                removeCvButton.setEnabled(true);
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(managecv.this,
+                            "CV removed successfully!",
+                            Toast.LENGTH_SHORT).show();
+                    currentCv = null;
+                    updateUINoCV();
+                } else {
+                    Toast.makeText(managecv.this,
+                            "Failed to remove CV: " + response.message(),
+                            Toast.LENGTH_SHORT).show();
+                }
             }
 
-            File cvFile = new File(cvDir, fileName);
+            @Override
+            public void onFailure(Call<apiResponse> call, Throwable t) {
+                if (isFinishing() || isDestroyed()) return;
+                removeCvButton.setEnabled(true);
+                Toast.makeText(managecv.this,
+                        "Network error: " + t.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
-            InputStream inputStream = getContentResolver().openInputStream(uri);
-            FileOutputStream outputStream = new FileOutputStream(cvFile);
+    private void updateUIWithCV() {
+        runOnUiThread(() -> {
+            cvStatusText.setText("CV Uploaded");
+            cvFileName.setText(currentCv.cvName);
+            cvFileName.setVisibility(View.VISIBLE);
 
-            byte[] buffer = new byte[1024];
+            String uploadDate = currentCv.uploadedAt;
+            if (uploadDate != null && uploadDate.length() >= 10) {
+                uploadDate = uploadDate.substring(0, 10);
+            }
+            cvUploadDate.setText("Uploaded: " + uploadDate);
+            cvUploadDate.setVisibility(View.VISIBLE);
+
+            viewCvButton.setVisibility(View.VISIBLE);
+            downloadCvButton.setVisibility(View.VISIBLE);
+            removeCvButton.setVisibility(View.VISIBLE);
+        });
+    }
+
+    private void updateUINoCV() {
+        runOnUiThread(() -> {
+            cvStatusText.setText("No CV uploaded");
+            cvFileName.setVisibility(View.GONE);
+            cvUploadDate.setVisibility(View.GONE);
+
+            viewCvButton.setVisibility(View.GONE);
+            downloadCvButton.setVisibility(View.GONE);
+            removeCvButton.setVisibility(View.GONE);
+        });
+    }
+
+    private String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme() != null && uri.getScheme().equals("content")) {
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (index >= 0) {
+                        result = cursor.getString(index);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            if (result != null) {
+                int cut = result.lastIndexOf('/');
+                if (cut != -1) {
+                    result = result.substring(cut + 1);
+                }
+            }
+        }
+        return result;
+    }
+
+    private File createTempFileFromUri(Uri uri, String fileName) {
+        InputStream inputStream = null;
+        FileOutputStream outputStream = null;
+
+        try {
+            File tempFile = new File(getCacheDir(), "temp_" + System.currentTimeMillis() + "_" + fileName);
+            inputStream = getContentResolver().openInputStream(uri);
+
+            if (inputStream == null) {
+                return null;
+            }
+
+            outputStream = new FileOutputStream(tempFile);
+
+            byte[] buffer = new byte[4096];
             int length;
             while ((length = inputStream.read(buffer)) > 0) {
                 outputStream.write(buffer, 0, length);
             }
 
-            outputStream.close();
-            inputStream.close();
+            outputStream.flush();
+            return tempFile;
 
-            return cvFile;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
-        }
-    }
-
-    private String getFileName(Uri uri) {
-        String fileName = "CV.pdf";
-
-        try {
-            android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-            if (cursor != null && cursor.moveToFirst()) {
-                int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
-                if (nameIndex != -1) {
-                    fileName = cursor.getString(nameIndex);
-                }
-                cursor.close();
+        } finally {
+            try {
+                if (outputStream != null) outputStream.close();
+                if (inputStream != null) inputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return fileName;
-    }
-
-    private void viewCV() {
-        if (cvUri == null) {
-            Toast.makeText(this, "No CV available", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            File cvFile = new File(cvUri.getPath());
-
-            Uri contentUri = FileProvider.getUriForFile(
-                    this,
-                    getApplicationContext().getPackageName() + ".provider",
-                    cvFile
-            );
-
-            intent.setDataAndType(contentUri, "application/pdf");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-            startActivity(Intent.createChooser(intent, "Open CV with"));
-        } catch (Exception e) {
-            Toast.makeText(this, "Unable to open CV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void downloadCV() {
-        // In this implementation, the CV is already stored locally
-        // This button could be used to share or export the CV
-        Toast.makeText(this, "CV is stored locally", Toast.LENGTH_SHORT).show();
-
-        // Optional: Share CV
-        try {
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            File cvFile = new File(cvUri.getPath());
-
-            Uri contentUri = FileProvider.getUriForFile(
-                    this,
-                    getApplicationContext().getPackageName() + ".provider",
-                    cvFile
-            );
-
-            shareIntent.setType("application/pdf");
-            shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-            startActivity(Intent.createChooser(shareIntent, "Share CV"));
-        } catch (Exception e) {
-            Toast.makeText(this, "Unable to share CV", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void showRemoveConfirmation() {
-        new AlertDialog.Builder(this)
-                .setTitle("Remove CV")
-                .setMessage("Are you sure you want to remove your CV? This action cannot be undone.")
-                .setPositiveButton("Remove", (dialog, which) -> removeCV())
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    private void removeCV() {
-        try {
-            // Delete file
-            if (cvUri != null) {
-                File cvFile = new File(cvUri.getPath());
-                if (cvFile.exists()) {
-                    cvFile.delete();
-                }
-            }
-
-            // Clear preferences
-            preferences.edit()
-                    .remove(KEY_CV_URI)
-                    .remove(KEY_CV_NAME)
-                    .remove(KEY_CV_DATE)
-                    .apply();
-
-            cvUri = null;
-            cvName = null;
-
-            Toast.makeText(this, "CV removed successfully", Toast.LENGTH_SHORT).show();
-            updateUI();
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Error removing CV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void updateUI() {
-        if (cvUri != null && cvName != null) {
-            // CV exists
-            cvStatusText.setText("CV Uploaded");
-            cvStatusText.setTextColor(getColor(R.color.colorPrimary));
-
-            cvFileName.setText(cvName);
-            cvFileName.setVisibility(View.VISIBLE);
-
-            String uploadDate = preferences.getString(KEY_CV_DATE, "");
-            if (!uploadDate.isEmpty()) {
-                cvUploadDate.setText("Uploaded: " + uploadDate);
-                cvUploadDate.setVisibility(View.VISIBLE);
-            }
-
-            uploadCvButton.setText("Replace CV");
-            viewCvButton.setVisibility(View.VISIBLE);
-            downloadCvButton.setVisibility(View.VISIBLE);
-            removeCvButton.setVisibility(View.VISIBLE);
-
-        } else {
-            // No CV
-            cvStatusText.setText("No CV uploaded");
-            cvStatusText.setTextColor(getColor(android.R.color.darker_gray));
-
-            cvFileName.setVisibility(View.GONE);
-            cvUploadDate.setVisibility(View.GONE);
-
-            uploadCvButton.setText("Upload CV (PDF)");
-            viewCvButton.setVisibility(View.GONE);
-            downloadCvButton.setVisibility(View.GONE);
-            removeCvButton.setVisibility(View.GONE);
         }
     }
 }

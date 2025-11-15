@@ -41,12 +41,12 @@ public class community extends bottomNav {
         // Top bar buttons
         findViewById(R.id.menuButton).setOnClickListener(v -> {
             Toast.makeText(this, "Opening Menu...", Toast.LENGTH_SHORT).show();
-            // TODO: Open navigation drawer
+
         });
 
         findViewById(R.id.profileButton).setOnClickListener(v -> {
             Toast.makeText(this, "Opening Profile...", Toast.LENGTH_SHORT).show();
-            // TODO: Navigate to profile
+
         });
     }
 
@@ -59,17 +59,17 @@ public class community extends bottomNav {
                     case 0:
                         // Groups tab
                         Toast.makeText(community.this, "Groups", Toast.LENGTH_SHORT).show();
-                        // TODO: Load groups
+
                         break;
                     case 1:
                         // Unions tab
                         Toast.makeText(community.this, "Unions", Toast.LENGTH_SHORT).show();
-                        // TODO: Load unions
+
                         break;
                     case 2:
                         // Chats tab (default)
                         Toast.makeText(community.this, "Chats", Toast.LENGTH_SHORT).show();
-                        // TODO: Load chats
+
                         break;
                 }
             }

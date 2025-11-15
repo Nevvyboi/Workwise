@@ -2,11 +2,9 @@ package com.workwise.email;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,8 +29,6 @@ import retrofit2.Response;
 
 public class forgotPassword extends AppCompatActivity {
 
-    private static final String TAG = "ForgotPassword";
-
     private ImageButton backButton;
     private TextInputLayout emailLayout;
     private TextInputEditText inputEmail;
@@ -46,15 +42,6 @@ public class forgotPassword extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.forgotpassword);
 
-        try {
-            api = apiClient.get().create(apiService.class);
-        } catch (Exception e) {
-            Log.e(TAG, "Error creating API service", e);
-            Toast.makeText(this, "Error initializing API. Please restart.", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
-
         api = apiClient.get().create(apiService.class);
 
         bindViews();
@@ -67,32 +54,25 @@ public class forgotPassword extends AppCompatActivity {
         inputEmail = findViewById(R.id.inputEmail);
         sendCodeButton = findViewById(R.id.sendCodeButton);
         backToLoginButton = findViewById(R.id.backToLoginButton);
-
-        if (backButton == null) Log.e(TAG, "backButton not found");
-        if (emailLayout == null) Log.e(TAG, "emailLayout not found");
-        if (sendCodeButton == null) Log.e(TAG, "sendCodeButton not found");
-        if (backToLoginButton == null) Log.e(TAG, "backToLoginButton not found");
     }
 
     private void setupListeners() {
-        if (backButton != null) {
-            backButton.setOnClickListener(v -> finish());
-        }
-        if (backToLoginButton != null) {
-            backToLoginButton.setOnClickListener(v -> finish());
-        }
-        if (sendCodeButton != null) {
-            sendCodeButton.setOnClickListener(v -> sendResetCode());
-        }
+        backButton.setOnClickListener(v -> finish());
+        
+        backToLoginButton.setOnClickListener(v -> finish());
+        
+        sendCodeButton.setOnClickListener(v -> sendResetCode());
     }
 
     private void sendResetCode() {
         String email = text(inputEmail);
 
+        // Clear previous errors
         if (emailLayout != null) {
             emailLayout.setError(null);
         }
 
+        // Validate email
         if (!isValidEmail(email)) {
             if (emailLayout != null) {
                 emailLayout.setError("Please enter a valid email address");
@@ -104,25 +84,20 @@ public class forgotPassword extends AppCompatActivity {
 
         forgotPasswordIn body = new forgotPasswordIn(email);
 
-        if (api == null) {
-            Toast.makeText(this, "API Error", Toast.LENGTH_SHORT).show();
-            setLoading(false);
-            return;
-        }
-
         api.forgotPassword(body, apiConfig.tokenForgotPassword, "application/json")
                 .enqueue(new Callback<forgotPasswordOut>() {
                     @Override
                     public void onResponse(Call<forgotPasswordOut> call, Response<forgotPasswordOut> res) {
                         setLoading(false);
-                        if (isFinishing() || isDestroyed()) return;
-
                         if (res.isSuccessful() && res.body() != null) {
+                            forgotPasswordOut data = res.body();
+                            
                             // Navigate to verify code screen
                             Intent intent = new Intent(forgotPassword.this, verifyResetCode.class);
                             intent.putExtra("email", email);
                             startActivity(intent);
                             finish();
+                            
                         } else {
                             handleHttpError(res);
                         }
@@ -130,7 +105,6 @@ public class forgotPassword extends AppCompatActivity {
 
                     @Override
                     public void onFailure(Call<forgotPasswordOut> call, Throwable t) {
-                        if (isFinishing() || isDestroyed()) return;
                         setLoading(false);
                         showDialog("Network error", t.getMessage());
                     }

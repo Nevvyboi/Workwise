@@ -31,22 +31,26 @@ public final class apiConfig {
     // Jobs tokens
     public static final String tokenJobsList = "JOBLISTTOK333";
     public static final String tokenJobSearch = "JOBSEARCHTOK555";
-    public static final String tokenJobsAll = "JOBSALLTOK444";
-    public static final String tokenJobsFilter = "JOBSFILTOK555";
-
 
     // Saved Jobs tokens
     public static final String tokenSavedList = "SAVEDLISTTOK012";
     public static final String tokenSavedAdd = "SAVEDADDTOK345";
     public static final String tokenSavedDelete = "SAVEDDELETETOK678";
 
-    //Rest Password
-    public static final String tokenForgotPassword = "FORGOTPASSTOK666";
+    public static final String tokenForgotPassword = "FORGOTPWDTOK123";
     public static final String tokenVerifyResetCode = "VERIFYCODETOK456";
     public static final String tokenResetPassword = "RESETPWDTOK789";
 
+    public static final String tokenChatCreate   = "CHATCREATETOK111";
+    public static final String tokenChatList     = "CHATLISTTOK222";
+    public static final String tokenChatMsgList  = "CHATMSGLISTTOK333";
+    public static final String tokenChatMsgSend  = "CHATMSGSENDTOK444";
 
-
+    public static String getWssBase() {
+        if (baseUrl.startsWith("https://")) return "wss://" + baseUrl.substring("https://".length());
+        if (baseUrl.startsWith("http://"))  return "ws://"  + baseUrl.substring("http://".length());
+        return baseUrl;
+    }
 
     private apiConfig() {}
 }

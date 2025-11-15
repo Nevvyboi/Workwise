@@ -56,9 +56,7 @@ dependencies {
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.github.mhiew:android-pdf-viewer:3.2.0-beta.1")
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
-    implementation ("androidx.gridlayout:gridlayout:1.0.0")
-    }
-
+}
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)

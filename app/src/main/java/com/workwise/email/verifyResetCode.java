@@ -1,17 +1,13 @@
 package com.workwise.email;
 
-import static android.content.ContentValues.TAG;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -44,7 +40,7 @@ public class verifyResetCode extends AppCompatActivity {
     private TextInputEditText inputCode;
     private MaterialButton verifyButton;
     private MaterialButton resendButton;
-
+    
     private apiService api;
     private String email;
     private CountDownTimer countDownTimer;
@@ -55,15 +51,9 @@ public class verifyResetCode extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.verifyresetcode);
 
-        try {
-            api = apiClient.get().create(apiService.class);
-        } catch (Exception e) {
-            Log.e(TAG, "Error creating API service", e);
-            Toast.makeText(this, "Error initializing API. Please restart.", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
+        api = apiClient.get().create(apiService.class);
 
+        // Get email from intent
         email = getIntent().getStringExtra("email");
         if (email == null || email.isEmpty()) {
             finish();
@@ -84,38 +74,30 @@ public class verifyResetCode extends AppCompatActivity {
         inputCode = findViewById(R.id.inputCode);
         verifyButton = findViewById(R.id.verifyButton);
         resendButton = findViewById(R.id.resendButton);
-
-        if (backButton == null) Log.e(TAG, "backButton not found");
-        if (inputCode == null) Log.e(TAG, "inputCode not found");
-        if (verifyButton == null) Log.e(TAG, "verifyButton not found");
-        if (resendButton == null) Log.e(TAG, "resendButton not found");
     }
 
     private void setupListeners() {
-        if (backButton != null) {
-            backButton.setOnClickListener(v -> finish());
-        }
-        if (verifyButton != null) {
-            verifyButton.setOnClickListener(v -> verifyCode());
-        }
-        if (resendButton != null) {
-            resendButton.setOnClickListener(v -> resendCode());
-        }
+        backButton.setOnClickListener(v -> finish());
+        
+        verifyButton.setOnClickListener(v -> verifyCode());
+        
+        resendButton.setOnClickListener(v -> resendCode());
+        
+        // Auto-verify when 6 digits entered
+        inputCode.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
-        if (inputCode != null) {
-            inputCode.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (s.length() == 6) {
-                        verifyCode();
-                    }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 6) {
+                    verifyCode();
                 }
-                @Override
-                public void afterTextChanged(Editable s) {}
-            });
-        }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void displayEmail() {
@@ -128,15 +110,15 @@ public class verifyResetCode extends AppCompatActivity {
         if (email == null || !email.contains("@")) {
             return email;
         }
-
+        
         String[] parts = email.split("@");
         String localPart = parts[0];
         String domain = parts[1];
-
+        
         if (localPart.length() <= 2) {
             return email;
         }
-
+        
         String masked = localPart.charAt(0) + "***" + localPart.charAt(localPart.length() - 1);
         return masked + "@" + domain;
     }
@@ -147,18 +129,18 @@ public class verifyResetCode extends AppCompatActivity {
             resendButton.setEnabled(false);
             resendButton.setAlpha(0.5f);
         }
-
+        
         // 15 minute countdown
         countDownTimer = new CountDownTimer(15 * 60 * 1000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 long minutes = millisUntilFinished / 60000;
                 long seconds = (millisUntilFinished % 60000) / 1000;
-
+                
                 if (timerText != null) {
                     timerText.setText(String.format("Code expires in %02d:%02d", minutes, seconds));
                 }
-
+                
                 // Enable resend after 1 minute
                 if (millisUntilFinished < 14 * 60 * 1000 && !canResend) {
                     canResend = true;
@@ -192,12 +174,6 @@ public class verifyResetCode extends AppCompatActivity {
             codeLayout.setError(null);
         }
 
-        if (api == null) {
-            Toast.makeText(this, "API Error", Toast.LENGTH_SHORT).show();
-            setLoading(false);
-            return;
-        }
-
         // Validate code
         if (code.length() != 6) {
             if (codeLayout != null) {
@@ -217,7 +193,7 @@ public class verifyResetCode extends AppCompatActivity {
                         setLoading(false);
                         if (res.isSuccessful() && res.body() != null) {
                             verifyResetCodeOut data = res.body();
-
+                            
                             if (data.valid) {
                                 // Navigate to reset password screen
                                 Intent intent = new Intent(verifyResetCode.this, resetPassword.class);
@@ -230,7 +206,7 @@ public class verifyResetCode extends AppCompatActivity {
                                     codeLayout.setError("Invalid or expired code");
                                 }
                             }
-
+                            
                         } else {
                             handleHttpError(res);
                         }
@@ -249,13 +225,6 @@ public class verifyResetCode extends AppCompatActivity {
             return;
         }
 
-        if (api == null) {
-            Toast.makeText(this, "API Error", Toast.LENGTH_SHORT).show();
-            resendButton.setText("Resend Code");
-            resendButton.setEnabled(true);
-            return;
-        }
-
         resendButton.setEnabled(false);
         resendButton.setText("Sending...");
 
@@ -266,16 +235,16 @@ public class verifyResetCode extends AppCompatActivity {
                     @Override
                     public void onResponse(Call<forgotPasswordOut> call, Response<forgotPasswordOut> res) {
                         resendButton.setText("Resend Code");
-
+                        
                         if (res.isSuccessful()) {
                             showDialog("Code Sent", "A new verification code has been sent to your email.");
-
+                            
                             // Restart timer
                             if (countDownTimer != null) {
                                 countDownTimer.cancel();
                             }
                             startTimer();
-
+                            
                             // Clear input
                             if (inputCode != null) {
                                 inputCode.setText("");
