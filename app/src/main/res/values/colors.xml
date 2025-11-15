@@ -8,4 +8,6 @@
     <color name="colorHint">#6B7280</color>
     <color name="colorDivider">#E5E7EB</color>
     <color name="buttonDisabled">#B9D0FF</color>
+    <color name="chat_meta_sent">#B3FFFFFF</color>
+    <color name="chat_meta_received">#999999</color>
 </resources>
