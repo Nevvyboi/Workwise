@@ -161,9 +161,14 @@ public interface apiService {
                                            @Header("Accept") String accept);
 
     @POST("v1/workwise/verify-reset-code")
-    Call<verifyResetCodeOut> verifyResetCode(@Body verifyResetCodeIn body,
-                                             @Header("X-Endpoint-Token") String endpointToken,
-                                             @Header("Accept") String accept);
+    @Headers({
+            "Accept: application/json",
+            "Content-Type: application/json"
+    })
+    Call<verifyResetCodeOut> verifyResetCode(
+            @Header("Authorization") String token,   // or whatever header you use
+            @Body verifyResetCodeIn body
+    );
 
     @POST("v1/workwise/reset-password")
     Call<resetPasswordOut> resetPassword(@Body resetPasswordIn body,

@@ -1,11 +1,27 @@
 package com.workwise.models;
 
-public class verifyResetCodeIn {
-    public String email;
-    public String resetCode;
+import com.google.gson.annotations.SerializedName;
 
-    public verifyResetCodeIn(String email, String resetCode) {
+/**
+ * Must match FastAPI Pydantic model EXACTLY:
+ *   email: str
+ *   code:  str
+ */
+public class verifyResetCodeIn {
+
+    @SerializedName("email")
+    private final String email;
+
+    @SerializedName("code")
+    private final String code;
+
+    // Constructor
+    public verifyResetCodeIn(String email, String code) {
         this.email = email;
-        this.resetCode = resetCode;
+        this.code  = code;
     }
+
+    // Getters (Retrofit needs them for serialization)
+    public String getEmail() { return email; }
+    public String getCode()  { return code;  }
 }

@@ -1,6 +1,8 @@
 package com.workwise.models;
 
+import com.google.gson.annotations.SerializedName;
+
 public class verifyResetCodeOut {
-    public String message;
+    @SerializedName("valid")
     public boolean valid;
 }
