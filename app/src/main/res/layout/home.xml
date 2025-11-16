@@ -25,4 +25,16 @@
         app:headerLayout="@layout/nav_header"
         app:menu="@menu/nav_menu"
         android:background="@android:color/white" />
+
+    <LinearLayout
+        android:id="@+id/quickActionsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+
+
+    </LinearLayout>
+
 </androidx.drawerlayout.widget.DrawerLayout>

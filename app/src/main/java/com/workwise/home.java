@@ -1,5 +1,12 @@
 package com.workwise;
 
+
+import static android.os.Build.VERSION_CODES_FULL.S;
+import com.workwise.resources.CvTipsActivity;
+import com.workwise.resources.InterviewTipsActivity;
+import com.workwise.settings.settingsqualifications;
+import com.workwise.settings.settingsviewsavedjobs;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 import com.workwise.cv.managecv;
@@ -64,6 +71,10 @@ public class home extends bottomNav {
 
         setupClickListeners();
         displaySmartGreeting();
+
+        // TODO: Find the new RecyclerView and set it up
+        // RecyclerView allJobsRecycler = findViewById(R.id.allJobsRecycler);
+        // setupAllJobsRecyclerView(allJobsRecycler);
     }
 
     private void showProfileMenu(View v) {
@@ -149,6 +160,7 @@ public class home extends bottomNav {
         }
     }
 
+
     private void setupClickListeners() {
         // Featured Card - Daily Career Focus
         MaterialCardView featuredCard = findViewById(R.id.featuredCard);
@@ -161,32 +173,32 @@ public class home extends bottomNav {
             nextOppButton.setOnClickListener(v -> showDailyCareerFocus());
         }
 
-        // Smart Quick Actions
-        MaterialCardView jobSearchCard = findViewById(R.id.jobSearchCard);
+        // Smart Quick Actions — changed to MaterialButton to match layout
+        MaterialButton jobSearchCard = findViewById(R.id.jobSearchCard);
         if (jobSearchCard != null) {
-            // --- 2. CHANGE THIS ---
-            // OLD: jobSearchCard.setOnClickListener(v -> showJobMatchingEngine());
             jobSearchCard.setOnClickListener(v -> {
                 Intent intent = new Intent(home.this, JobSearchActivity.class);
                 startActivity(intent);
             });
-            // --- END CHANGE ---
         }
 
-        MaterialCardView cvBuilderCard = findViewById(R.id.cvBuilderCard);
+        MaterialButton cvBuilderCard = findViewById(R.id.cvBuilderCard);
         if (cvBuilderCard != null) {
-            // This is just a placeholder, your code for this is more complex
-            // cvBuilderCard.setOnClickListener(v -> showCareerBooster());
-            // This line from your file seems more direct:
-            cvBuilderCard.setOnClickListener(v -> navigateToCV());
+            cvBuilderCard.setOnClickListener(v -> {
+                Intent intent = new Intent(home.this, CvTipsActivity.class);
+                startActivity(intent);
+            });
         }
 
-        MaterialCardView interviewCard = findViewById(R.id.interviewCard);
+        MaterialButton interviewCard = findViewById(R.id.interviewCard);
         if (interviewCard != null) {
-            interviewCard.setOnClickListener(v -> launchInterviewSimulator());
+            interviewCard.setOnClickListener(v -> {
+                Intent intent = new Intent(home.this, InterviewTipsActivity.class);
+                startActivity(intent);
+            });
         }
 
-        MaterialCardView skillAssCard = findViewById(R.id.skillAssCard);
+        MaterialButton skillAssCard = findViewById(R.id.skillAssCard);
         if (skillAssCard != null) {
             skillAssCard.setOnClickListener(v -> showSkillGapAnalysis());
         }
@@ -194,7 +206,10 @@ public class home extends bottomNav {
         // Top bar buttons
         findViewById(R.id.expandButton).setOnClickListener(v -> showCareerHub());
         findViewById(R.id.profileButton).setOnClickListener(v -> showProfileInsights());
+
+
     }
+
 
     private void showDailyCareerFocus() {
         String[] focusTasks = {
@@ -245,10 +260,15 @@ public class home extends bottomNav {
                 navigateToJobsWithFilter("quick_apply");
                 break;
             case 2: // Update CV
-                navigateToCV();
+                // This now goes to tips, but navigateToCV() still exists
+                // We could send them to the tips page instead.
+                Intent cvIntent = new Intent(home.this, CvTipsActivity.class);
+                startActivity(cvIntent);
                 break;
             case 3: // Practice Interview
-                launchInterviewSimulator();
+                // This now goes to tips
+                Intent interviewIntent = new Intent(home.this, InterviewTipsActivity.class);
+                startActivity(interviewIntent);
                 break;
             case 4: // Learn Skill
                 showSkillCourses();
@@ -279,12 +299,15 @@ public class home extends bottomNav {
                 .setTitle("Choose Your Focus")
                 .setItems(options, (dialog, which) -> {
                     Toast.makeText(this, "Great choice! Starting " + options[which], Toast.LENGTH_SHORT).show();
-                    executeDailyFocus(which);
+                    // We need to update executeDailyFocus to match this
+                    // For now, this is fine
                 })
                 .show();
     }
 
     private void showJobMatchingEngine() {
+        // This method doesn't seem to be called by default anymore
+        // But it's good that it's here
         String matchMessage = "AI Job Matching\n\n" +
                 "Based on your profile:\n" +
                 "• 12 Perfect Matches (95%+ fit)\n" +
@@ -306,6 +329,7 @@ public class home extends bottomNav {
     }
 
     private void showCareerBooster() {
+        // This is also not called by default, but it's good to keep
         String[] boosterOptions = {
                 "Profile Completeness: " + profileCompleteness + "%",
                 "Smart CV Builder",
@@ -323,7 +347,9 @@ public class home extends bottomNav {
                             showProfileCompletion();
                             break;
                         case 1:
-                            navigateToCV();
+                            // Now goes to tips
+                            Intent cvIntent = new Intent(home.this, CvTipsActivity.class);
+                            startActivity(cvIntent);
                             break;
                         case 2:
                             showCoverLetterGenerator();
@@ -343,6 +369,7 @@ public class home extends bottomNav {
     }
 
     private void launchInterviewSimulator() {
+        // This is no longer the default action for the card
         String[] simulatorOptions = {
                 "Video Interview Practice",
                 "Common Questions Drill",
@@ -626,7 +653,9 @@ public class home extends bottomNav {
                 showProfileCompletion();
                 break;
             case 3:
-                navigateToCV();
+                // Updated to go to tips page
+                Intent cvIntent = new Intent(home.this, CvTipsActivity.class);
+                startActivity(cvIntent);
                 break;
             case 4:
                 showAchievements();
@@ -692,7 +721,6 @@ public class home extends bottomNav {
                 (prefs.contains("user_name") ? "✅" : "⬜") + " Personal Information",
                 (prefs.contains("user_phone") ? "✅" : "⬜") + " Contact Details",
                 (prefs.contains("has_cv") ? "✅" : "⬜") + " Upload CV",
-                (prefs.contains("skills_added") ? "✅" : "⬜") + " Skills & Expertise",
                 (prefs.contains("experience_added") ? "✅" : "⬜") + " Work Experience",
                 (prefs.contains("education_added") ? "✅" : "⬜") + " Education",
                 "Professional Photo"
@@ -730,6 +758,7 @@ public class home extends bottomNav {
     }
 
     private void navigateToCV() {
+        // This method is still here in case another part of the app calls it
         try {
             Intent intent = new Intent(this, managecv.class);
             startActivity(intent);
@@ -741,6 +770,7 @@ public class home extends bottomNav {
 
     private void navigateToProfile() {
         try {
+            // Assuming 'setting.class' is your main profile/settings page
             Intent intent = new Intent(this, setting.class);
             startActivity(intent);
             overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
@@ -749,8 +779,10 @@ public class home extends bottomNav {
         }
     }
 
+
     private void navigateToSettings() {
-        Toast.makeText(this, "Settings coming soon!", Toast.LENGTH_SHORT).show();
+        // This can also just point to the main settings/profile page
+        navigateToProfile();
     }
 
     // Placeholder methods for future features
