@@ -27,7 +27,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/baselinearrowback24"
+                android:src="@drawable/baseline_arrow_back_24"
                 app:tint="#1A1A1A"
                 android:layout_centerVertical="true"
                 android:layout_alignParentStart="true"
@@ -68,24 +68,36 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1. Keep it Concise"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#1A1A1A"
-                        android:layout_marginBottom="8dp"/>
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/outline_timer_24"
+                        app:tint="@color/colorPrimary"
+                        android:layout_marginEnd="16dp"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Recruiters spend seconds on a CV. Aim for one page (two if you have extensive experience). Use bullet points to describe achievements."
-                        android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"/>
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Keep it Concise"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#1A1A1A"
+                            android:layout_marginBottom="4dp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Recruiters spend seconds on a CV. Aim for one page (two if you have extensive experience)."
+                            android:textSize="14sp"
+                            android:lineSpacingMultiplier="1.2"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -100,24 +112,36 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="2. Tailor for the Job"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#1A1A1A"
-                        android:layout_marginBottom="8dp"/>
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/outline_target_24"
+                        app:tint="@color/colorPrimary"
+                        android:layout_marginEnd="16dp"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Don't use a one-size-fits-all CV. Read the job description and highlight the skills and experiences that match what the employer is looking for."
-                        android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"/>
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tailor for the Job"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#1A1A1A"
+                            android:layout_marginBottom="4dp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Don't use a one-size-fits-all CV. Highlight skills and experiences that match the job description."
+                            android:textSize="14sp"
+                            android:lineSpacingMultiplier="1.2"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -147,28 +171,34 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Website: The Balance Careers CV Tips\nhttps://www.thebalancemoney.com/cv-tips-and-examples-2060138"
+                        android:text="Website: The Balance Careers CV Tips"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="https://www.thebalancemoney.com/cv-tips-and-examples-2060138"
                         android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"
                         android:autoLink="web"
                         android:layout_marginBottom="12dp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Video: How to Write a CV in 2025\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                        android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"
-                        android:autoLink="web"
-                        android:layout_marginBottom="12dp"/>
-
+                        android:text="Video: How to Write a CV in 2025"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp"/>
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Website: Zety CV Builder Guide\nhttps://zety.com/blog/how-to-make-a-cv"
+                        android:text="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                         android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"
-                        android:autoLink="web"/>
+                        android:autoLink="web"
+                        android:layout_marginBottom="12dp"/>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

@@ -8,8 +8,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
 
     <application
         android:usesCleartextTraffic="true"
@@ -64,37 +62,62 @@
             android:windowSoftInputMode="adjustResize|stateHidden" />
 
         <activity
-            android:name="com.workwise.settings.settingsprofile"/>
+            android:name="com.workwise.settings.settingsprofile"
+            android:exported="false"/>
 
         <activity
-            android:name="com.workwise.cv.managecv" />
+            android:name="com.workwise.cv.managecv"
+            android:exported="false" />
 
         <activity
             android:name="com.workwise.settings.settingsqualifications"
-            android:windowSoftInputMode="adjustResize|stateHidden"/>
+            android:label="My Qualifications"
+            android:parentActivityName=".setting"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:exported="false"/>
 
         <activity
-            android:name="com.workwise.settings.settingsviewsavedjobs" />
+            android:name="com.workwise.settings.settingsviewsavedjobs"
+            android:label="Saved Jobs"
+            android:parentActivityName=".home"
+            android:exported="false" />
 
         <activity
-            android:name=".email.forgotPassword"/>
+            android:name=".email.forgotPassword"
+            android:exported="false"/>
         <activity
-            android:name=".email.resetPassword"/>
+            android:name=".email.resetPassword"
+            android:exported="false"/>
         <activity
-            android:name=".email.verifyResetCode"/>
+            android:name=".email.verifyResetCode"
+            android:exported="false"/>
 
         <activity
             android:name="com.workwise.pdfviewer.pdfviewer"
-            android:theme="@style/Theme.WorkWise.NoActionBar" />
+            android:theme="@style/Theme.WorkWise.NoActionBar"
+            android:exported="false" />
 
         <activity
             android:name="com.workwise.resources.CvTipsActivity"
             android:label="CV Builder Tips"
-            android:parentActivityName=".home" />
+            android:parentActivityName=".home"
+            android:exported="false" />
         <activity
             android:name="com.workwise.resources.InterviewTipsActivity"
             android:label="Interview Tips"
-            android:parentActivityName=".home" />
+            android:parentActivityName=".home"
+            android:exported="false" />
+        <activity
+            android:name=".jobs.JobSearchActivity"
+            android:label="Job Search"
+            android:parentActivityName=".home"
+            android:exported="false" />
+
+        <activity
+            android:name=".assessment.SkillAssessmentActivity"
+            android:label="Skill Assessment"
+            android:parentActivityName=".home"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -106,4 +129,5 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-    </application> </manifest>
+    </application>
+</manifest>
