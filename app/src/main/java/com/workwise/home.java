@@ -1,9 +1,9 @@
 package com.workwise;
 
-
-import static android.os.Build.VERSION_CODES_FULL.S;
+// Import new Activity classes
 import com.workwise.resources.CvTipsActivity;
 import com.workwise.resources.InterviewTipsActivity;
+import com.workwise.assessment.SkillAssessmentActivity;
 import com.workwise.settings.settingsqualifications;
 import com.workwise.settings.settingsviewsavedjobs;
 
@@ -15,6 +15,7 @@ import com.workwise.jobs.JobSearchActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log; // <-- ADDED
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -27,6 +28,22 @@ import android.view.View;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager; // <-- ADDED
+import androidx.recyclerview.widget.RecyclerView; // <-- ADDED
+
+import com.workwise.jobs.jobapt; // <-- ADDED
+import com.workwise.models.job; // <-- ADDED
+import com.workwise.network.apiClient; // <-- ADDED
+import com.workwise.network.apiConfig; // <-- ADDED
+import com.workwise.network.apiService; // <-- ADDED
+
+import java.util.ArrayList; // <-- ADDED
+import java.util.HashMap; // <-- ADDED
+import java.util.List; // <-- ADDED
+
+import retrofit2.Call; // <-- ADDED
+import retrofit2.Callback; // <-- ADDED
+import retrofit2.Response; // <-- ADDED
 
 public class home extends bottomNav {
 
@@ -37,11 +54,22 @@ public class home extends bottomNav {
     private ActionBarDrawerToggle toggle;
     private ImageButton menuButton, profileButton;
 
+    // --- ADDED FOR ALL JOBS ---
+    private apiService api;
+    private RecyclerView allJobsRecycler;
+    private jobapt allJobsAdapter;
+    // --- END ---
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.home);
+
+        // --- ADDED ---
+        // Initialize API Service
+        api = apiClient.get().create(apiService.class);
+        // --- END ---
 
         drawerLayout = findViewById(R.id.drawerLayout);
         NavigationView navigationView = findViewById(R.id.navigationView);
@@ -72,9 +100,75 @@ public class home extends bottomNav {
         setupClickListeners();
         displaySmartGreeting();
 
-        // TODO: Find the new RecyclerView and set it up
-        // RecyclerView allJobsRecycler = findViewById(R.id.allJobsRecycler);
-        // setupAllJobsRecyclerView(allJobsRecycler);
+        // --- UPDATED TODO SECTION ---
+        // Find the new RecyclerView and set it up
+        allJobsRecycler = findViewById(R.id.allJobsRecycler);
+        setupAllJobsRecyclerView();
+        // --- END ---
+    }
+
+    // --- ADDED METHOD TO SETUP RECYCLERVIEW ---
+    private void setupAllJobsRecyclerView() {
+        if (allJobsRecycler == null) {
+            Log.e("home.java", "allJobsRecycler is null. Check R.id.allJobsRecycler in your home.xml");
+            return;
+        }
+
+        allJobsRecycler.setLayoutManager(new LinearLayoutManager(this));
+        // Pass empty distance map, as this list isn't sorted by distance
+        allJobsAdapter = new jobapt(new ArrayList<>(), new HashMap<>(), this);
+        allJobsRecycler.setAdapter(allJobsAdapter);
+
+        // Now, fetch the jobs from the API
+        fetchAndDisplayJobs();
+    }
+
+    // --- ADDED METHOD TO FETCH JOBS ---
+    private void fetchAndDisplayJobs() {
+        // You can add a ProgressBar here and show it
+        // e.g., allJobsProgressBar.setVisibility(View.VISIBLE);
+
+        Call<List<job>> call = api.getActiveJobs(
+                apiConfig.tokenJobsList,
+                50, // Limit (e.g., 50 jobs)
+                0,  // Offset
+                null, // No employment_type filter
+                null, // No work_arrangement filter
+                null  // No location filter
+        );
+
+        call.enqueue(new Callback<List<job>>() {
+            @Override
+            public void onResponse(Call<List<job>> call, Response<List<job>> response) {
+                // Hide progress bar
+                // e.g., allJobsProgressBar.setVisibility(View.GONE);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    if (response.body().isEmpty()) {
+                        // Show empty state
+                        Log.d("home.java", "No jobs found.");
+                        Toast.makeText(home.this, "No jobs available right now.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        // Update the adapter
+                        allJobsAdapter.updateJobs(response.body());
+                    }
+                } else {
+                    // Show error state
+                    Log.e("home.java", "Failed to load jobs: " + response.message());
+                    Toast.makeText(home.this, "Failed to load jobs", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<job>> call, Throwable t) {
+                // Hide progress bar
+                // e.g., allJobsProgressBar.setVisibility(View.GONE);
+
+                // Show error state
+                Log.e("home.java", "Error loading jobs: " + t.getMessage());
+                Toast.makeText(home.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void showProfileMenu(View v) {
@@ -91,9 +185,6 @@ public class home extends bottomNav {
         });
         popup.show();
     }
-
-
-
 
 
     @Override
@@ -160,7 +251,6 @@ public class home extends bottomNav {
         }
     }
 
-
     private void setupClickListeners() {
         // Featured Card - Daily Career Focus
         MaterialCardView featuredCard = findViewById(R.id.featuredCard);
@@ -173,8 +263,8 @@ public class home extends bottomNav {
             nextOppButton.setOnClickListener(v -> showDailyCareerFocus());
         }
 
-        // Smart Quick Actions — changed to MaterialButton to match layout
-        MaterialButton jobSearchCard = findViewById(R.id.jobSearchCard);
+        // --- UPDATED Quick Action Listeners (now MaterialCardView) ---
+        MaterialCardView jobSearchCard = findViewById(R.id.jobSearchCard);
         if (jobSearchCard != null) {
             jobSearchCard.setOnClickListener(v -> {
                 Intent intent = new Intent(home.this, JobSearchActivity.class);
@@ -182,7 +272,7 @@ public class home extends bottomNav {
             });
         }
 
-        MaterialButton cvBuilderCard = findViewById(R.id.cvBuilderCard);
+        MaterialCardView cvBuilderCard = findViewById(R.id.cvBuilderCard);
         if (cvBuilderCard != null) {
             cvBuilderCard.setOnClickListener(v -> {
                 Intent intent = new Intent(home.this, CvTipsActivity.class);
@@ -190,7 +280,7 @@ public class home extends bottomNav {
             });
         }
 
-        MaterialButton interviewCard = findViewById(R.id.interviewCard);
+        MaterialCardView interviewCard = findViewById(R.id.interviewCard);
         if (interviewCard != null) {
             interviewCard.setOnClickListener(v -> {
                 Intent intent = new Intent(home.this, InterviewTipsActivity.class);
@@ -198,19 +288,26 @@ public class home extends bottomNav {
             });
         }
 
-        MaterialButton skillAssCard = findViewById(R.id.skillAssCard);
+        // --- THIS IS THE KEY CHANGE ---
+        MaterialCardView skillAssCard = findViewById(R.id.skillAssCard);
         if (skillAssCard != null) {
-            skillAssCard.setOnClickListener(v -> showSkillGapAnalysis());
+            // OLD: skillAssCard.setOnClickListener(v -> showSkillGapAnalysis());
+            // NEW:
+            skillAssCard.setOnClickListener(v -> {
+                Intent intent = new Intent(home.this, SkillAssessmentActivity.class);
+                startActivity(intent);
+            });
         }
+        // --- END OF CHANGE ---
 
         // Top bar buttons
         findViewById(R.id.expandButton).setOnClickListener(v -> showCareerHub());
         findViewById(R.id.profileButton).setOnClickListener(v -> showProfileInsights());
 
-
     }
 
-
+    // ... (All other methods from showDailyCareerFocus() onwards remain the same) ...
+    // ...
     private void showDailyCareerFocus() {
         String[] focusTasks = {
                 "Complete Your Profile",
@@ -260,13 +357,10 @@ public class home extends bottomNav {
                 navigateToJobsWithFilter("quick_apply");
                 break;
             case 2: // Update CV
-                // This now goes to tips, but navigateToCV() still exists
-                // We could send them to the tips page instead.
                 Intent cvIntent = new Intent(home.this, CvTipsActivity.class);
                 startActivity(cvIntent);
                 break;
             case 3: // Practice Interview
-                // This now goes to tips
                 Intent interviewIntent = new Intent(home.this, InterviewTipsActivity.class);
                 startActivity(interviewIntent);
                 break;
@@ -299,15 +393,11 @@ public class home extends bottomNav {
                 .setTitle("Choose Your Focus")
                 .setItems(options, (dialog, which) -> {
                     Toast.makeText(this, "Great choice! Starting " + options[which], Toast.LENGTH_SHORT).show();
-                    // We need to update executeDailyFocus to match this
-                    // For now, this is fine
                 })
                 .show();
     }
 
     private void showJobMatchingEngine() {
-        // This method doesn't seem to be called by default anymore
-        // But it's good that it's here
         String matchMessage = "AI Job Matching\n\n" +
                 "Based on your profile:\n" +
                 "• 12 Perfect Matches (95%+ fit)\n" +
@@ -329,7 +419,6 @@ public class home extends bottomNav {
     }
 
     private void showCareerBooster() {
-        // This is also not called by default, but it's good to keep
         String[] boosterOptions = {
                 "Profile Completeness: " + profileCompleteness + "%",
                 "Smart CV Builder",
@@ -347,7 +436,6 @@ public class home extends bottomNav {
                             showProfileCompletion();
                             break;
                         case 1:
-                            // Now goes to tips
                             Intent cvIntent = new Intent(home.this, CvTipsActivity.class);
                             startActivity(cvIntent);
                             break;
@@ -369,7 +457,6 @@ public class home extends bottomNav {
     }
 
     private void launchInterviewSimulator() {
-        // This is no longer the default action for the card
         String[] simulatorOptions = {
                 "Video Interview Practice",
                 "Common Questions Drill",
@@ -407,13 +494,13 @@ public class home extends bottomNav {
                 .setMessage(mockMessage)
                 .setPositiveButton("Start Now!", (dialog, which) -> {
                     Toast.makeText(this, "Interview starting in 3 seconds... Get ready!", Toast.LENGTH_LONG).show();
-                    // TODO: Launch mock interview activity
                 })
                 .setNegativeButton("Prepare First", null)
                 .show();
     }
 
     private void showSkillGapAnalysis() {
+        // This is the original dialog, it's still available to be called from other places
         String[] analysisOptions = {
                 "Skills Gap Analysis",
                 "Market Demand Insights",
@@ -653,7 +740,6 @@ public class home extends bottomNav {
                 showProfileCompletion();
                 break;
             case 3:
-                // Updated to go to tips page
                 Intent cvIntent = new Intent(home.this, CvTipsActivity.class);
                 startActivity(cvIntent);
                 break;
@@ -721,6 +807,7 @@ public class home extends bottomNav {
                 (prefs.contains("user_name") ? "✅" : "⬜") + " Personal Information",
                 (prefs.contains("user_phone") ? "✅" : "⬜") + " Contact Details",
                 (prefs.contains("has_cv") ? "✅" : "⬜") + " Upload CV",
+                (prefs.contains("skills_added") ? "✅" : "⬜") + " Skills & Expertise",
                 (prefs.contains("experience_added") ? "✅" : "⬜") + " Work Experience",
                 (prefs.contains("education_added") ? "✅" : "⬜") + " Education",
                 "Professional Photo"
@@ -740,13 +827,11 @@ public class home extends bottomNav {
     // Helper navigation methods
     private void navigateToJobsWithFilter(String filter) {
         try {
-            // If the filter is 'all' or 'matches', go to the new search page
             if ("all".equals(filter) || "matches".equals(filter) || "quick_apply".equals(filter)) {
                 Intent intent = new Intent(this, JobSearchActivity.class);
-                intent.putExtra("filter", filter); // The search page can optionally use this
+                intent.putExtra("filter", filter);
                 startActivity(intent);
             } else {
-                // Otherwise, go to the map
                 Intent intent = new Intent(this, nearme.class);
                 intent.putExtra("filter", filter);
                 startActivity(intent);
@@ -758,7 +843,6 @@ public class home extends bottomNav {
     }
 
     private void navigateToCV() {
-        // This method is still here in case another part of the app calls it
         try {
             Intent intent = new Intent(this, managecv.class);
             startActivity(intent);
@@ -770,7 +854,6 @@ public class home extends bottomNav {
 
     private void navigateToProfile() {
         try {
-            // Assuming 'setting.class' is your main profile/settings page
             Intent intent = new Intent(this, setting.class);
             startActivity(intent);
             overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
@@ -781,7 +864,6 @@ public class home extends bottomNav {
 
 
     private void navigateToSettings() {
-        // This can also just point to the main settings/profile page
         navigateToProfile();
     }
 
@@ -789,47 +871,40 @@ public class home extends bottomNav {
     private void showCoverLetterGenerator() {
         Toast.makeText(this, "AI Cover Letter Generator - Coming Soon!", Toast.LENGTH_LONG).show();
     }
-
     private void showPortfolio() {
         Toast.makeText(this, "Portfolio Showcase - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
-
     private void showAchievementHighlighter() {
         Toast.makeText(this, "Achievement Highlighter - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
-
     private void showCareerPath() {
         Toast.makeText(this, "Career Progression Path - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
-
     private void showMarketDemand() {
         Toast.makeText(this, "Market Demand Insights - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
-
     private void showCertificationPaths() {
         Toast.makeText(this, "Certification Paths - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
 
     private void quickSkillAssessment() {
-        Toast.makeText(this, "Starting Quick Assessment...", Toast.LENGTH_SHORT).show();
+        // This now opens the new activity
+        Intent intent = new Intent(home.this, SkillAssessmentActivity.class);
+        startActivity(intent);
     }
 
     private void showSkillCourses() {
         Toast.makeText(this, "Recommended Courses - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
-
     private void showIndustryTrends() {
         Toast.makeText(this, "Industry Skill Trends - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
-
     private void showCompanyInsights() {
         Toast.makeText(this, "Company Research Hub - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
-
     private void showNetworkingHub() {
         Toast.makeText(this, "Networking Hub - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
-
     private void showSalaryCalculator() {
         Toast.makeText(this, "Salary Calculator - Coming Soon!", Toast.LENGTH_SHORT).show();
     }
