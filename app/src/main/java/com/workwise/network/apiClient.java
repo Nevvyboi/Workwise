@@ -14,7 +14,7 @@ public final class apiClient {
 
     private static Retrofit retrofit;
     private static OkHttpClient okHttpClient;
-    private static apiService service;
+    private static com.workwise.network.apiService service;
 
     private apiClient() {}
 
@@ -45,31 +45,12 @@ public final class apiClient {
         return retrofit;
     }
 
-    public static apiService service() {
+    public static com.workwise.network.apiService service() {
         if (service == null) {
-            service = get().create(apiService.class);
+            service = get().create(com.workwise.network.apiService.class);
         }
         return service;
     }
 
-    public static WebSocket openChatSocket(int conversationId, int userId, WebSocketListener listener) {
-        String wsUrl = apiConfig.getWssBase()
-                + "/v1/workwise/ws/chat"
-                + "?conversation_id=" + conversationId
-                + "&user_id=" + userId;
-
-        Request.Builder rb = new Request.Builder().url(wsUrl);
-
-        Request req = rb.build();
-        return http().newWebSocket(req, listener);
-    }
-
-    /** Optional: tidy up resources if you ever need to fully tear down the client */
-    public static void shutdown() {
-        if (okHttpClient != null) {
-            okHttpClient.dispatcher().executorService().shutdown();
-            okHttpClient.connectionPool().evictAll();
-        }
-    }
 }
 
