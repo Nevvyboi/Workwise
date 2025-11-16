@@ -119,7 +119,6 @@ public class setting extends bottomNav {
             viewSavedJobsCard.setOnClickListener(v -> {
                 Intent intent = new Intent(this, settingsviewsavedjobs.class);
                 startActivity(intent);
-                finish();
             });
         }
 
