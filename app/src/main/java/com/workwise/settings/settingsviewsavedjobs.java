@@ -79,7 +79,7 @@ public class settingsviewsavedjobs extends AppCompatActivity {
             savedJobsContainer.setVisibility(View.GONE);
         }
 
-        // --- START CHANGE ---
+
         apiService api = null; // Initialize as null
         try {
             api = apiClient.get().create(apiService.class);
@@ -87,13 +87,13 @@ public class settingsviewsavedjobs extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        // ADDED: Check if API initialization failed
+
         if (api == null) {
             Toast.makeText(this, "Error initializing API. Please restart.", Toast.LENGTH_LONG).show();
             showEmptyState(); // Show the empty state as we can't load
             return;
         }
-        // --- END CHANGE ---
+
 
         Call<List<savedJobs>> call = api.getSavedJobs(userId, apiConfig.tokenSavedList);
 
@@ -155,10 +155,11 @@ public class settingsviewsavedjobs extends AppCompatActivity {
     }
 
     private View createJobCard(savedJobs job) {
-        // ... (unchanged) ...
         LayoutInflater inflater = LayoutInflater.from(this);
         MaterialCardView cardView = (MaterialCardView) inflater.inflate(
                 R.layout.itemsavedjob, savedJobsContainer, false);
+
+        // Find views
         TextView tvJobTitle = cardView.findViewById(R.id.tv_saved_job_title);
         TextView tvCompanyName = cardView.findViewById(R.id.tv_saved_company_name);
         TextView tvLocationInfo = cardView.findViewById(R.id.tv_saved_location_info);
@@ -166,36 +167,71 @@ public class settingsviewsavedjobs extends AppCompatActivity {
         TextView tvSavedDate = cardView.findViewById(R.id.tv_saved_date);
         MaterialButton btnView = cardView.findViewById(R.id.btn_view_saved_job);
         MaterialButton btnRemove = cardView.findViewById(R.id.btn_remove_saved_job);
-        tvJobTitle.setText(job.getJobTitle());
-        tvCompanyName.setText(job.getCompanyName());
-        String locationInfo = job.getJobLocation() != null ? job.getJobLocation() : "Location not specified";
-        tvLocationInfo.setText(locationInfo);
-        String salary = job.getSalaryRange() != null ? job.getSalaryRange() : "Salary not disclosed";
-        tvSalary.setText(salary);
-        String savedDate = job.getSavedAt() != null ? "Saved: " + formatDate(job.getSavedAt()) : "Recently saved";
-        tvSavedDate.setText(savedDate);
-        btnView.setOnClickListener(v -> {
-            Toast.makeText(this, "View job details: " + job.getJobTitle(), Toast.LENGTH_SHORT).show();
-        });
-        btnRemove.setOnClickListener(v -> {
-            removeSavedJob(job, cardView);
-        });
+
+        // --- START FIX: Add null checks for all views ---
+        if (tvJobTitle != null) {
+            tvJobTitle.setText(job.getJobTitle());
+        }
+
+        if (tvCompanyName != null) {
+            tvCompanyName.setText(job.getCompanyName());
+        }
+
+        if (tvLocationInfo != null) {
+            String locationInfo = job.getJobLocation() != null ? job.getJobLocation() : "Location not specified";
+            tvLocationInfo.setText(locationInfo);
+        }
+
+        if (tvSalary != null) {
+            String salary = job.getSalaryRange() != null ? job.getSalaryRange() : "Salary not disclosed";
+            tvSalary.setText(salary);
+        }
+
+        if (tvSavedDate != null) {
+            String savedDate = job.getSavedAt() != null ? "Saved: " + formatDate(job.getSavedAt()) : "Recently saved";
+            tvSavedDate.setText(savedDate);
+        }
+
+        if (btnView != null) {
+            btnView.setOnClickListener(v -> {
+                Toast.makeText(this, "View job details: " + job.getJobTitle(), Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (btnRemove != null) {
+            btnRemove.setOnClickListener(v -> {
+                removeSavedJob(job, cardView);
+            });
+        }
+        // --- END FIX ---
+
         return cardView;
     }
 
     private void removeSavedJob(savedJobs job, View cardView) {
-        // ... (unchanged) ...
-        apiService api = apiClient.get().create(apiService.class);
-        // ADDED: api null check
+
+        // --- START FIX: Add try-catch for API initialization ---
+        apiService api;
+        try {
+            api = apiClient.get().create(apiService.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error: API not available.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (api == null) {
             Toast.makeText(this, "Error: API not available.", Toast.LENGTH_SHORT).show();
             return;
         }
+        // --- END FIX ---
+
         Call<apiResponse> call = api.deleteSavedJob(
                 userId,
                 job.getSavedJobId(),
                 apiConfig.tokenSavedDelete
         );
+
         call.enqueue(new Callback<apiResponse>() {
             @Override
             public void onResponse(@NonNull Call<apiResponse> call,

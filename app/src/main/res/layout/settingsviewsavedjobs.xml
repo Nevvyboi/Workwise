@@ -68,7 +68,8 @@
                         android:layout_marginBottom="24dp"
                         android:src="@android:drawable/ic_menu_save"
                         app:tint="#B0BEC5"
-                        tools:ignore="ContentDescription" />
+                        tools:ignore="ContentDescription"
+                        android:layout_height="120dp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
