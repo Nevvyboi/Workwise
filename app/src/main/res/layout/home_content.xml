@@ -131,7 +131,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/nextOppButton"
-                        style="@style/Widget.Material3.Button"
+                        style="@style/Widget.MaterialComponents.Button"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:text="Find Your Next Opportunity"
@@ -154,168 +154,111 @@
                 android:textStyle="bold" />
 
             <GridLayout
+                android:id="@+id/quickActionsGrid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:columnCount="2"
                 android:rowCount="2"
                 android:layout_marginBottom="20dp">
 
-                <com.google.android.material.card.MaterialCardView
+                <!-- Replaced card with MaterialButton (keeps same id and layout weight) -->
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/jobSearchCard"
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
                     android:layout_margin="6dp"
                     android:backgroundTint="#FFFFFF"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="3dp">
+                    android:gravity="center"
+                    android:drawableTop="@android:drawable/ic_menu_search"
+                    android:drawablePadding="8dp"
+                    android:text="Job Search"
+                    android:textColor="#1A1A1A"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    app:cornerRadius="16dp"
+                    android:focusable="true"
+                    android:clickable="true" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@android:drawable/ic_menu_search"
-                            app:tint="@color/colorPrimary"
-                            tools:ignore="ContentDescription" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Job Search"
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:textAlignment="center" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/cvBuilderCard"
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
                     android:layout_margin="6dp"
                     android:backgroundTint="#FFFFFF"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="3dp">
+                    android:gravity="center"
+                    android:drawableTop="@android:drawable/ic_menu_edit"
+                    android:drawablePadding="8dp"
+                    android:text="CV Builder"
+                    android:textColor="#1A1A1A"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    app:cornerRadius="16dp"
+                    android:focusable="true"
+                    android:clickable="true" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@android:drawable/ic_menu_edit"
-                            app:tint="@color/colorPrimary"
-                            tools:ignore="ContentDescription" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="CV Builder"
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:textAlignment="center" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/interviewCard"
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
                     android:layout_margin="6dp"
                     android:backgroundTint="#FFFFFF"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="3dp">
+                    android:gravity="center"
+                    android:drawableTop="@android:drawable/ic_menu_info_details"
+                    android:drawablePadding="8dp"
+                    android:text="Interview Tips"
+                    android:textColor="#1A1A1A"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    app:cornerRadius="16dp"
+                    android:focusable="true"
+                    android:clickable="true" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@android:drawable/ic_menu_info_details"
-                            app:tint="@color/colorPrimary"
-                            tools:ignore="ContentDescription" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Interview Tips"
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:textAlignment="center" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/skillAssCard"
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
                     android:layout_margin="6dp"
                     android:backgroundTint="#FFFFFF"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="3dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground">
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@android:drawable/ic_menu_agenda"
-                            app:tint="@color/colorPrimary"
-                            tools:ignore="ContentDescription" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Skill Assessment"
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:textAlignment="center" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                    android:gravity="center"
+                    android:drawableTop="@android:drawable/ic_menu_agenda"
+                    android:drawablePadding="8dp"
+                    android:text="Skill Assessment"
+                    android:textColor="#1A1A1A"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    app:cornerRadius="16dp"
+                    android:focusable="true"
+                    android:clickable="true" />
             </GridLayout>
+
+            <!-- START: New Section for All Jobs -->
+            <TextView
+                android:id="@+id/allJobsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="All Jobs"
+                android:textColor="#1A1A1A"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/allJobsRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="200dp"
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/itemjobcard" />
+
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
