@@ -176,32 +176,24 @@ public interface apiService {
                                          @Header("X-Endpoint-Token") String endpointToken,
                                          @Header("Accept") String accept);
 
-    @POST("/v1/workwise/chats")
-    Call<ConversationOut> createChat(
-            @Header("X-Endpoint-Token") String tok,
-            @Body ConversationCreateIn body
-    );
+    @POST("v1/workwise/chats")
+    Call<ConversationOut> createConversation(@Body ConversationCreateIn body,
+                                             @Header("X-Endpoint-Token") String endpointToken);
 
-    @GET("/v1/workwise/chats/{userId}")
-    Call<List<ConversationOut>> listChats(
-            @Header("X-Endpoint-Token") String tok,
-            @Path("userId") int userId
-    );
+    @GET("v1/workwise/chats/{user_id}")
+    Call<List<ConversationOut>> getUserConversations(@Path("user_id") int userId,
+                                                     @Header("X-Endpoint-Token") String endpointToken);
 
-    @GET("/v1/workwise/chats/{conversationId}/messages")
-    Call<List<MessageOut>> getMessages(
-            @Header("X-Endpoint-Token") String tok,
-            @Path("conversationId") int conversationId,
-            @Query("limit") int limit,
-            @Query("before") Integer before
-    );
+    @GET("v1/workwise/chats/{conversation_id}/messages")
+    Call<List<MessageOut>> getMessages(@Header("X-Endpoint-Token") String endpointToken,
+                                       @Path("conversation_id") int conversationId,
+                                       @Query("limit") int limit,
+                                       @Query("before") Integer before);
 
-    @POST("/v1/workwise/chats/{conversationId}/messages")
-    Call<MessageOut> sendMessage(
-            @Header("X-Endpoint-Token") String tok,
-            @Path("conversationId") int conversationId,
-            @Body MessageSendIn body
-    );
+    @POST("v1/workwise/chats/{conversation_id}/messages")
+    Call<MessageOut> sendMessage(@Header("X-Endpoint-Token") String endpointToken,
+                                 @Path("conversation_id") int conversationId,
+                                 @Body MessageSendIn message);
 
 
 }

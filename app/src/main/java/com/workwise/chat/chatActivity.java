@@ -1,8 +1,14 @@
 package com.workwise.chat;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -11,7 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.gson.Gson;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.workwise.R;
 import com.workwise.models.MessageOut;
 import com.workwise.models.MessageSendIn;
@@ -19,224 +25,214 @@ import com.workwise.network.apiClient;
 import com.workwise.network.apiConfig;
 import com.workwise.network.apiService;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import android.content.SharedPreferences;
 
 public class chatActivity extends AppCompatActivity {
 
-    private int conversationId;
-    private String displayName;
-    private int meUserId;
+    // ===== Intent extras (keep consistent everywhere)
+    public static final String EXTRA_CONVERSATION_ID = "extra_conversation_id";
+    public static final String EXTRA_DISPLAY_NAME    = "extra_display_name";
 
-    private TextView title;
-    private RecyclerView list;
-    private EditText input;
-    private ImageButton sendBtn;
+    // Helper to open this screen from anywhere
+    public static void open(Context ctx, int conversationId, String displayName) {
+        Intent i = new Intent(ctx, chatActivity.class);
+        i.putExtra(EXTRA_CONVERSATION_ID, conversationId);
+        i.putExtra(EXTRA_DISPLAY_NAME, displayName);
+        if (!(ctx instanceof Activity)) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ctx.startActivity(i);
+    }
 
+    // ===== Views
+    private TextView titleView;
+    private ImageView backBtn;
+    private View loadingOverlay;
+    private RecyclerView chatList;
+    private EditText chatInput;
+    private FloatingActionButton chatSend;
+
+    // ===== State
+    private int conversationId = -1;
+    private String displayName = "Chat";
+    private int meUserId = -1;
+
+    // ===== Data
     private final List<MessageOut> items = new ArrayList<>();
     private chatAdapter adapter;
 
-    private apiService svc;
-    private WebSocket ws;
-    private final Gson gson = new Gson();
+    // ===== Network
+    private apiService api;
+    private Call<List<MessageOut>> loadCall;
+    private Call<MessageOut> sendCall;
+    // IMPORTANT: your API uses different tokens for list vs send
+    private String tokenChatList;
+    private String tokenChatSend;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        // Read args
+        Intent it = getIntent();
+        if (it != null) {
+            conversationId = it.getIntExtra(EXTRA_CONVERSATION_ID, -1);
+            String nameArg  = it.getStringExtra(EXTRA_DISPLAY_NAME);
+            if (!TextUtils.isEmpty(nameArg)) displayName = nameArg;
+        }
+
+        // Load current user id
         SharedPreferences prefs = getSharedPreferences("WorkWisePrefs", MODE_PRIVATE);
         meUserId = prefs.getInt("user_id", -1);
-        if (meUserId <= 0) {
-            Toast.makeText(this, "Please sign in again", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
 
-        conversationId = getIntent().getIntExtra("conversationId", -1);
-        displayName = getIntent().getStringExtra("displayName");
-
+        // Validate basics early
         if (conversationId <= 0) {
-            Toast.makeText(this, "Invalid conversation", Toast.LENGTH_SHORT).show();
+            toast("Invalid conversation");
+            finish();
+            return;
+        }
+        if (meUserId <= 0) {
+            toast("Please sign in again");
             finish();
             return;
         }
 
-        // Initialize views
-        title = findViewById(R.id.chatTitle);
-        list = findViewById(R.id.chatList);
-        input = findViewById(R.id.chatInput);
-        sendBtn = findViewById(R.id.chatSend);
+        // Views
+        titleView = findViewById(R.id.chatTitle);
+        backBtn   = findViewById(R.id.backButton); // may be null if hidden in XML
+        loadingOverlay = findViewById(R.id.loadingOverlay);
+        chatList  = findViewById(R.id.chatList);
+        chatInput = findViewById(R.id.chatInput);
+        chatSend  = findViewById(R.id.chatSend);
 
-        title.setText(displayName != null ? displayName : "Chat");
+        if (titleView != null) titleView.setText(displayName);
+        if (backBtn != null) backBtn.setOnClickListener(v -> finish());
 
-        // Setup RecyclerView
+        // Recycler
+        LinearLayoutManager lm = new LinearLayoutManager(this);
+        lm.setStackFromEnd(true);
+        chatList.setLayoutManager(lm);
         adapter = new chatAdapter(items, meUserId);
-        list.setLayoutManager(new LinearLayoutManager(this));
-        list.setAdapter(adapter);
+        chatList.setAdapter(adapter);
 
-        // Retrofit service
-        svc = apiClient.service();
+        // Retrofit + tokens
+        api = apiClient.service();
+        tokenChatList = apiConfig.tokenChatMsgList; // GET
+        tokenChatSend = apiConfig.tokenChatMsgSend; // POST
 
-        loadMessageHistory();
+        // Load history
+        fetchMessages();
 
-        // Setup WebSocket for real-time messages
-        setupWebSocket();
-
-        // Send button click listener
-        sendBtn.setOnClickListener(v -> sendMessage());
-
-        // Send on Enter key
-        input.setOnEditorActionListener((v, actionId, event) -> {
+        // Send click + IME send
+        chatSend.setOnClickListener(v -> sendMessage());
+        chatInput.setOnEditorActionListener((v, actionId, event) -> {
             sendMessage();
             return true;
         });
     }
 
-    private void loadMessageHistory() {
-        svc.getMessages(apiConfig.tokenChatMsgList, conversationId, 50, null)
-                .enqueue(new Callback<List<MessageOut>>() {
-                    @Override
-                    public void onResponse(Call<List<MessageOut>> call, Response<List<MessageOut>> resp) {
-                        if (resp.isSuccessful() && resp.body() != null) {
-                            items.clear();
-                            items.addAll(resp.body());
-                            adapter.notifyDataSetChanged();
-                            if (!items.isEmpty()) {
-                                list.scrollToPosition(items.size() - 1);
-                            }
-                        } else {
-                            toast("Failed to load messages (" + resp.code() + ")");
-                            // Add sample messages for testing
-                            addSampleMessages();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<List<MessageOut>> call, Throwable t) {
-                        toast("Network error: " + t.getMessage());
-                        // Add sample messages for testing
-                        addSampleMessages();
-                    }
-                });
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (loadCall != null) loadCall.cancel();
+        if (sendCall != null) sendCall.cancel();
     }
 
-    private void setupWebSocket() {
-        ws = apiClient.openChatSocket(conversationId, meUserId, new WebSocketListener() {
+    // ===== API actions
+
+    private void fetchMessages() {
+        showLoading(true);
+
+        // apiService: getMessages(@Header token, @Path conversation_id, @Query limit, @Query before)
+        loadCall = api.getMessages(tokenChatList, conversationId, 50, null);
+        loadCall.enqueue(new Callback<List<MessageOut>>() {
             @Override
-            public void onMessage(WebSocket webSocket, String text) {
-                try {
-                    MessageOut msg = gson.fromJson(text, MessageOut.class);
-                    runOnUiThread(() -> {
-                        items.add(msg);
-                        adapter.notifyItemInserted(items.size() - 1);
-                        list.scrollToPosition(items.size() - 1);
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
+            public void onResponse(Call<List<MessageOut>> call, Response<List<MessageOut>> res) {
+                showLoading(false);
+                if (!res.isSuccessful() || res.body() == null) {
+                    toast("Failed to load messages (" + res.code() + ")");
+                    return;
                 }
+                items.clear();
+                items.addAll(res.body());
+                adapter.notifyDataSetChanged();
+                if (!items.isEmpty()) chatList.scrollToPosition(items.size() - 1);
             }
 
             @Override
-            public void onOpen(WebSocket webSocket, okhttp3.Response response) {
-                runOnUiThread(() -> toast("Connected to chat"));
-            }
-
-            @Override
-            public void onClosed(WebSocket webSocket, int code, String reason) {
-                runOnUiThread(() -> toast("Chat disconnected"));
-            }
-
-            @Override
-            public void onFailure(WebSocket webSocket, Throwable t, okhttp3.Response response) {
-                runOnUiThread(() -> toast("Connection error: " + t.getMessage()));
+            public void onFailure(Call<List<MessageOut>> call, Throwable t) {
+                showLoading(false);
+                toast("Network error: " + t.getMessage());
             }
         });
     }
 
     private void sendMessage() {
-        String messageText = input.getText().toString().trim();
-        if (messageText.isEmpty()) {
+        String text = chatInput.getText().toString().trim();
+        if (text.isEmpty()) return;
+
+        // Guard: must have a valid user id
+        if (meUserId <= 0) {
+            Toast.makeText(this, "Please sign in again (no user id).", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Clear input immediately for better UX
-        input.setText("");
+        // Optimistic local add
+        chatInput.setText("");
+        MessageOut local = new MessageOut();
+        local.body = text;
+        local.senderId = meUserId;
+        local.conversationId = conversationId;
+        local.createdAt = nowClock();
 
-        // Create message object
-        MessageSendIn message = new MessageSendIn(meUserId, messageText);
+        items.add(local);
+        int pos = items.size() - 1;
+        adapter.notifyItemInserted(pos);
+        chatList.scrollToPosition(pos);
 
-        svc.sendMessage(apiConfig.tokenChatMsgSend, conversationId, message)
-                .enqueue(new Callback<MessageOut>() {
-                    @Override
-                    public void onResponse(Call<MessageOut> call, Response<MessageOut> resp) {
-                        if (!resp.isSuccessful()) {
-                            toast("Failed to send message (" + resp.code() + ")");
-                            // Add message locally if send fails but user sees it
-                            addLocalMessage(messageText);
-                        }
-                        // If successful, WebSocket will handle the incoming message
-                    }
+        // Build payload: REQUIRED constructor (senderId, body)
+        MessageSendIn payload = new MessageSendIn(meUserId, text);
 
-                    @Override
-                    public void onFailure(Call<MessageOut> call, Throwable t) {
-                        toast("Send error: " + t.getMessage());
-                        // Add message locally
-                        addLocalMessage(messageText);
-                    }
-                });
-    }
+        // Send using the SEND token
+        sendCall = api.sendMessage(tokenChatSend, conversationId, payload);
+        sendCall.enqueue(new Callback<MessageOut>() {
+            @Override
+            public void onResponse(Call<MessageOut> call, Response<MessageOut> res) {
+                if (!res.isSuccessful() || res.body() == null) {
+                    Toast.makeText(chatActivity.this, "Send failed (" + res.code() + ")", Toast.LENGTH_SHORT).show();
+                    return; // keep optimistic message
+                }
+                // Replace optimistic with server copy (id/timestamp/etc.)
+                items.set(pos, res.body());
+                adapter.notifyItemChanged(pos);
+            }
 
-    private void addLocalMessage(String messageText) {
-        MessageOut localMessage = new MessageOut();
-        localMessage.senderId = meUserId;
-        localMessage.body = messageText;
-        localMessage.createdAt = "Just now";
-
-        runOnUiThread(() -> {
-            items.add(localMessage);
-            adapter.notifyItemInserted(items.size() - 1);
-            list.scrollToPosition(items.size() - 1);
+            @Override
+            public void onFailure(Call<MessageOut> call, Throwable t) {
+                Toast.makeText(chatActivity.this, "Send error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                // keep optimistic message
+            }
         });
     }
 
-    private void addSampleMessages() {
-        // Add some sample messages for testing
-        if (items.isEmpty()) {
-            MessageOut msg1 = new MessageOut();
-            msg1.senderId = (meUserId == 1012) ? 1001 : 1012; // Other user
-            msg1.body = "Hello! Welcome to the chat.";
-            msg1.createdAt = "10:30 AM";
+    // ===== UI helpers
 
-            MessageOut msg2 = new MessageOut();
-            msg2.senderId = meUserId;
-            msg2.body = "Hi there! Thanks for connecting.";
-            msg2.createdAt = "10:31 AM";
-
-            items.add(msg1);
-            items.add(msg2);
-
-            adapter.notifyDataSetChanged();
-            list.scrollToPosition(items.size() - 1);
-        }
+    private void showLoading(boolean show) {
+        if (loadingOverlay != null) loadingOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (ws != null) {
-            ws.close(1000, "Activity destroyed");
-        }
+    private String nowClock() {
+        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
     }
 
-    private void toast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    private void toast(String s) {
+        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 }
