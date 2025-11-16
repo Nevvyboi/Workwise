@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F8F9FA">
+    android:background="#F8F9FA"
+    tools:context=".resources.InterviewTipsActivity">
 
     <!-- Custom Header -->
     <com.google.android.material.appbar.MaterialToolbar
@@ -27,7 +28,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/baselinearrowback24"
+                android:src="@drawable/baseline_arrow_back_24"
                 app:tint="#1A1A1A"
                 android:layout_centerVertical="true"
                 android:layout_alignParentStart="true"
@@ -68,24 +69,36 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1. Research the Company"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#1A1A1A"
-                        android:layout_marginBottom="8dp"/>
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/outline_business_24"
+                        app:tint="@color/colorPrimary"
+                        android:layout_marginEnd="16dp"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Understand the company's mission, values, and recent news. This shows you are genuinely interested and prepared."
-                        android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"/>
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Research the Company"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#1A1A1A"
+                            android:layout_marginBottom="4dp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Understand their mission, values, and recent news. This shows genuine interest."
+                            android:textSize="14sp"
+                            android:lineSpacingMultiplier="1.2"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -100,24 +113,36 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="2. Practice the STAR Method"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#1A1A1A"
-                        android:layout_marginBottom="8dp"/>
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/outline_star_24"
+                        app:tint="@color/colorPrimary"
+                        android:layout_marginEnd="16dp"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="For behavioral questions, structure your answers using STAR: Situation (set the scene), Task (describe your responsibility), Action (explain what you did), and Result (share the outcome)."
-                        android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"/>
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Practice the STAR Method"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#1A1A1A"
+                            android:layout_marginBottom="4dp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Structure answers using: Situation, Task, Action, and Result."
+                            android:textSize="14sp"
+                            android:lineSpacingMultiplier="1.2"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -147,19 +172,34 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Video: Top 10 Job Interview Questions\nhttps://www.youtube.com/watch?v=g_c-wB-Z2qA"
+                        android:text="Video: Top 10 Job Interview Questions"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="https://www.youtube.com/watch?v=g_c-wB-Z2qA"
                         android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"
                         android:autoLink="web"
                         android:layout_marginBottom="12dp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Website: Harvard Business Review - Interview Tips\nhttps://hbr.org/topic/interviewing"
+                        android:text="Website: Harvard Business Review - Interview Tips"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="https://hbr.org/topic/interviewing"
                         android:textSize="14sp"
-                        android:lineSpacingMultiplier="1.2"
-                        android:autoLink="web"/>
+                        android:autoLink="web"
+                        android:layout_marginBottom="12dp"/>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
