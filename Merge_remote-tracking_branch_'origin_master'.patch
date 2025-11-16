@@ -1,0 +1,570 @@
+Subject: [PATCH] Merge remote-tracking branch 'origin/master'
+---
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+--- a/app/src/main/AndroidManifest.xml	(revision 46e4ac000cc0c07be41e6d3a5047d72df120b441)
++++ b/app/src/main/AndroidManifest.xml	(revision 30eaaf17e3253992beee09b8d6b061bd98ba767e)
+@@ -57,12 +57,6 @@
+             android:exported="true"
+             android:launchMode="singleTop"/>
+ 
+-        <activity
+-            android:name="com.workwise.chat.chatActivity"
+-            android:exported="false"
+-            android:launchMode="singleTop"
+-            android:windowSoftInputMode="adjustResize|stateHidden" />
+-
+         <activity android:name="com.workwise.settings.settingsprofile"/>
+         <activity android:name="com.workwise.settings.settingsmanagecv" />
+         <activity
+@@ -75,7 +69,7 @@
+             android:label="PDF Viewer"
+             android:theme="@style/Theme.WorkWiseSA"
+             android:exported="false" />
+-
++        
+         <activity android:name=".email.forgotPassword"/>
+         <activity android:name=".email.resetPassword"/>
+         <activity android:name=".email.verifyResetCode"/>
+Index: app/src/main/java/com/workwise/community.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/workwise/community.java b/app/src/main/java/com/workwise/community.java
+--- a/app/src/main/java/com/workwise/community.java	(revision 46e4ac000cc0c07be41e6d3a5047d72df120b441)
++++ b/app/src/main/java/com/workwise/community.java	(revision 30eaaf17e3253992beee09b8d6b061bd98ba767e)
+@@ -1,51 +1,29 @@
+ package com.workwise;
+ 
+-import android.content.Intent;
+-import android.content.SharedPreferences;
++import com.workwise.ui.bottomNav;
+ import android.os.Bundle;
+-import android.util.Log;
++import android.text.Editable;
++import android.text.TextWatcher;
++import android.widget.EditText;
+ import android.widget.Toast;
+-
+-import androidx.annotation.Nullable;
+-
+-import com.google.android.material.button.MaterialButton;
+-import com.workwise.R;
+-import com.workwise.models.ConversationCreateIn;
+-import com.workwise.models.ConversationOut;
+-import com.workwise.network.apiClient;
+-import com.workwise.network.apiConfig;
+-import com.workwise.network.apiService;
+-import com.workwise.ui.bottomNav;
+-
+-import java.util.Arrays;
+-import java.util.List;
+-
+-import retrofit2.Call;
+-import retrofit2.Callback;
+-import retrofit2.Response;
++import com.google.android.material.card.MaterialCardView;
++import com.google.android.material.tabs.TabLayout;
+ 
+ public class community extends bottomNav {
+ 
+-    private MaterialButton joinChatButton;
+-    private apiService svc;
+-    private static final String PREF_NAME = "WorkWisePrefs";
+-    private static final int COMMUNITY_CHAT_ID = 1000; // Fixed community chat ID
++    private TabLayout tabLayout;
++    private EditText searchInput;
++    private MaterialCardView chatItem1, chatItem2, chatItem3;
+ 
+     @Override
+-    protected void onCreate(@Nullable Bundle savedInstanceState) {
++    protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.community);
+ 
+-        // Initialize views
+-        joinChatButton = findViewById(R.id.joinChatButton);
+-
+-        // API service
+-        svc = apiClient.service();
+-
+-        // Set click listener for join chat button
+-        if (joinChatButton != null) {
+-            joinChatButton.setOnClickListener(v -> joinCommunityChat());
+-        }
++        initializeViews();
++        setupTabLayout();
++        setupSearchBar();
++        setupChatItems();
+     }
+ 
+     @Override
+@@ -53,60 +31,136 @@
+         return "community";
+     }
+ 
+-    private void joinCommunityChat() {
+-        int me = getCurrentUserId();
+-        if (me <= 0) {
+-            toast("Please sign in again");
+-            Log.e("COMMUNITY", "Invalid user ID: " + me);
+-            return;
+-        }
++    private void initializeViews() {
++        tabLayout = findViewById(R.id.tabLayout);
++        searchInput = findViewById(R.id.searchInput);
++        chatItem1 = findViewById(R.id.chatItem1);
++        chatItem2 = findViewById(R.id.chatItem2);
++        chatItem3 = findViewById(R.id.chatItem3);
++
++        // Top bar buttons
++        findViewById(R.id.menuButton).setOnClickListener(v -> {
++            Toast.makeText(this, "Opening Menu...", Toast.LENGTH_SHORT).show();
++            // TODO: Open navigation drawer
++        });
++
++        findViewById(R.id.profileButton).setOnClickListener(v -> {
++            Toast.makeText(this, "Opening Profile...", Toast.LENGTH_SHORT).show();
++            // TODO: Navigate to profile
++        });
++    }
+ 
+-        Log.d("COMMUNITY", "Joining community chat, user ID: " + me);
+-
+-        // Use fixed community chat ID instead of creating new one
+-        List<Integer> participants = Arrays.asList(me, COMMUNITY_CHAT_ID);
++    private void setupTabLayout() {
++        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
++            @Override
++            public void onTabSelected(TabLayout.Tab tab) {
++                int position = tab.getPosition();
++                switch (position) {
++                    case 0:
++                        // Groups tab
++                        Toast.makeText(community.this, "Groups", Toast.LENGTH_SHORT).show();
++                        // TODO: Load groups
++                        break;
++                    case 1:
++                        // Unions tab
++                        Toast.makeText(community.this, "Unions", Toast.LENGTH_SHORT).show();
++                        // TODO: Load unions
++                        break;
++                    case 2:
++                        // Chats tab (default)
++                        Toast.makeText(community.this, "Chats", Toast.LENGTH_SHORT).show();
++                        // TODO: Load chats
++                        break;
++                }
++            }
+ 
+-        svc.createChat(apiConfig.tokenChatCreate, new ConversationCreateIn(participants))
+-                .enqueue(new Callback<ConversationOut>() {
+-                    @Override
+-                    public void onResponse(Call<ConversationOut> call, Response<ConversationOut> resp) {
+-                        Log.d("COMMUNITY", "Response code: " + resp.code());
+-                        if (!resp.isSuccessful() || resp.body() == null) {
+-                            String errorMsg = "Failed to join community chat (" + resp.code() + ")";
+-                            toast(errorMsg);
+-                            Log.e("COMMUNITY", errorMsg);
+-                            // Fallback: open chat directly with community ID
+-                            launchChatActivity(COMMUNITY_CHAT_ID, "WorkWise Community");
+-                            return;
+-                        }
+-                        Log.d("COMMUNITY", "Community chat joined with ID: " + resp.body().conversationId);
+-                        launchChatActivity(resp.body().conversationId, "WorkWise Community");
+-                    }
++            @Override
++            public void onTabUnselected(TabLayout.Tab tab) {
++                // Not needed
++            }
+ 
+-                    @Override
+-                    public void onFailure(Call<ConversationOut> call, Throwable t) {
+-                        String errorMsg = "Network error: " + t.getMessage();
+-                        toast(errorMsg);
+-                        Log.e("COMMUNITY", errorMsg);
+-                        // Fallback: open chat directly
+-                        launchChatActivity(COMMUNITY_CHAT_ID, "WorkWise Community");
+-                    }
+-                });
++            @Override
++            public void onTabReselected(TabLayout.Tab tab) {
++                // Not needed
++            }
++        });
++
++        // Set default tab to "Chats" (index 2)
++        TabLayout.Tab chatsTab = tabLayout.getTabAt(2);
++        if (chatsTab != null) {
++            chatsTab.select();
++        }
+     }
++
++    private void setupSearchBar() {
++        searchInput.addTextChangedListener(new TextWatcher() {
++            @Override
++            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
++                // Not needed
++            }
+ 
+-    private void launchChatActivity(int conversationId, String displayName) {
+-        Intent i = new Intent(this, com.workwise.chat.chatActivity.class);
+-        i.putExtra("conversationId", conversationId);
+-        i.putExtra("displayName", displayName);
+-        startActivity(i);
+-    }
++            @Override
++            public void onTextChanged(CharSequence s, int start, int before, int count) {
++                filterChats(s.toString());
++            }
+ 
+-    private int getCurrentUserId() {
+-        SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+-        return prefs.getInt("user_id", -1);
++            @Override
++            public void afterTextChanged(Editable s) {
++                // Not needed
++            }
++        });
+     }
+ 
+-    private void toast(String m) {
+-        Toast.makeText(this, m, Toast.LENGTH_SHORT).show();
++    private void setupChatItems() {
++        if (chatItem1 != null) {
++            chatItem1.setOnClickListener(v -> {
++                Toast.makeText(this, "Opening chat with Phumlani Nkosi", Toast.LENGTH_SHORT).show();
++                // TODO: Navigate to chat screen
++                // Intent intent = new Intent(this, ChatActivity.class);
++                // intent.putExtra("chat_id", "1");
++                // intent.putExtra("chat_name", "Phumlani Nkosi");
++                // startActivity(intent);
++            });
++        }
++
++        // Chat Item 2 - WorkWise Team
++        if (chatItem2 != null) {
++            chatItem2.setOnClickListener(v -> {
++                Toast.makeText(this, "Opening WorkWise Team chat", Toast.LENGTH_SHORT).show();
++                // TODO: Navigate to chat screen
++            });
++        }
++
++        // Chat Item 3 - Union SA
++        if (chatItem3 != null) {
++            chatItem3.setOnClickListener(v -> {
++                Toast.makeText(this, "Opening Union SA chat", Toast.LENGTH_SHORT).show();
++                // TODO: Navigate to chat screen
++            });
++        }
++    }
++
++    private void filterChats(String query) {
++        // TODO: Implement search/filter logic
++        if (query.isEmpty()) {
++            // Show all chats
++            showAllChats();
++        } else {
++            // Filter chats based on query
++            // This is a simple example - you'd implement actual filtering
++            Toast.makeText(this, "Searching for: " + query, Toast.LENGTH_SHORT).show();
++        }
++    }
++
++    private void showAllChats() {
++        // Show all chat items
++        // In a real app, you'd use RecyclerView and filter the adapter
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++        // Refresh chat list when returning to this screen
++        // TODO: Load latest messages
+     }
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/workwise/network/apiConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/workwise/network/apiConfig.java b/app/src/main/java/com/workwise/network/apiConfig.java
+--- a/app/src/main/java/com/workwise/network/apiConfig.java	(revision 46e4ac000cc0c07be41e6d3a5047d72df120b441)
++++ b/app/src/main/java/com/workwise/network/apiConfig.java	(revision 30eaaf17e3253992beee09b8d6b061bd98ba767e)
+@@ -29,7 +29,8 @@
+     public static final String tokenStats = "STATSTOK789";
+ 
+     // Jobs tokens
+-    public static final String tokenJobsList = "JOBLISTTOK111";
++    public static final String tokenJobsList = "JOBLISTTOK333";
++    public static final String tokenJobSearch = "JOBSEARCHTOK555";
+ 
+     // Saved Jobs tokens
+     public static final String tokenSavedList = "SAVEDLISTTOK012";
+Index: app/src/main/java/com/workwise/network/apiService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/workwise/network/apiService.java b/app/src/main/java/com/workwise/network/apiService.java
+--- a/app/src/main/java/com/workwise/network/apiService.java	(revision 46e4ac000cc0c07be41e6d3a5047d72df120b441)
++++ b/app/src/main/java/com/workwise/network/apiService.java	(revision 30eaaf17e3253992beee09b8d6b061bd98ba767e)
+@@ -6,48 +6,34 @@
+ import okhttp3.RequestBody;
+ import retrofit2.Call;
+ import retrofit2.http.*;
+-import retrofit2.http.Body;
+-import retrofit2.http.GET;
+-import retrofit2.http.POST;
+-import retrofit2.http.Header;
+-import retrofit2.http.Path;
+-import retrofit2.http.Query;
+-
+-import com.workwise.models.ConversationCreateIn;
+-import com.workwise.models.ConversationOut;
+-import com.workwise.models.MessageSendIn;
+-import com.workwise.models.MessageOut;
+-
+ 
+ public interface apiService {
+ 
++    // ========== AUTHENTICATION ==========
+     @POST("v1/workwise/account")
+-    Call<registerOut> register(
+-            @Body registerIn body,
+-            @Header("X-Endpoint-Token") String endpointToken,
+-            @Header("Accept") String accept
+-    );
++    Call<registerOut> register(@Body registerIn body,
++                               @Header("X-Endpoint-Token") String endpointToken,
++                               @Header("Accept") String accept);
+ 
+     @POST("v1/workwise/user")
+-    Call<loginOut> login(
+-            @Body loginIn body,
+-            @Header("X-Endpoint-Token") String endpointToken,
+-            @Header("Accept") String accept
+-    );
++    Call<loginOut> login(@Body loginIn body,
++                         @Header("X-Endpoint-Token") String endpointToken,
++                         @Header("Accept") String accept);
+ 
++    // ========== PROFILE ==========
+     @GET("v1/workwise/profile/{user_id}")
+     Call<UserProfileOut> getProfile(
+             @Path("user_id") int userId,
+             @Header("X-Endpoint-Token") String token
+     );
+ 
++    // --- FIXES APPLIED HERE ---
+     @PUT("v1/workwise/profile/{user_id}")
+-    Call<UserProfileOut> updateProfile(
+-            @Path("user_id") int userId,
+-            @Body UpdateProfileIn body,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<UserProfileOut> updateProfile(@Path("user_id") int userId,
++                                       @Body UpdateProfileIn body,
++                                       @Header("X-Endpoint-Token") String endpointToken);
+ 
++    // POST upload image
+     @Multipart
+     @POST("v1/workwise/profile/image")
+     Call<ProfileImageUploadResponse> uploadProfileImage(
+@@ -56,89 +42,70 @@
+             @Header("X-Endpoint-Token") String token
+     );
+ 
++    // ========== CV ==========
+     @GET("v1/workwise/cvs/{user_id}")
+-    Call<List<cvItem>> getCVs(
+-            @Path("user_id") int userId,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<List<cvItem>> getCVs(@Path("user_id") int userId,
++                              @Header("X-Endpoint-Token") String endpointToken);
+ 
+     @Multipart
+     @POST("v1/workwise/cvs/{user_id}")
+-    Call<cvUpload> uploadCV(
+-            @Path("user_id") int userId,
+-            @Part MultipartBody.Part file,
+-            @Part("is_primary") RequestBody isPrimary,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<cvUpload> uploadCV(@Path("user_id") int userId,
++                            @Part MultipartBody.Part file,
++                            @Part("is_primary") RequestBody isPrimary,
++                            @Header("X-Endpoint-Token") String endpointToken);
+ 
+     @DELETE("v1/workwise/cvs/{user_id}/{cv_id}")
+-    Call<apiResponse> deleteCV(
+-            @Path("user_id") int userId,
+-            @Path("cv_id") int cvId,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<apiResponse> deleteCV(@Path("user_id") int userId,
++                               @Path("cv_id") int cvId,
++                               @Header("X-Endpoint-Token") String endpointToken);
+ 
+     @PUT("v1/workwise/cvs/{user_id}/{cv_id}/primary")
+-    Call<apiResponse> setPrimaryCV(
+-            @Path("user_id") int userId,
+-            @Path("cv_id") int cvId,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<apiResponse> setPrimaryCV(@Path("user_id") int userId,
++                                   @Path("cv_id") int cvId,
++                                   @Header("X-Endpoint-Token") String endpointToken);
+ 
++    // ========== QUALIFICATIONS ==========
+     @GET("v1/workwise/qualifications/{user_id}")
+-    Call<List<qualification>> getQualifications(
+-            @Path("user_id") int userId,
+-            @Header("X-Endpoint-Token") String endpointToke
+-    );
++    Call<List<qualification>> getQualifications(@Path("user_id") int userId,
++                                                @Header("X-Endpoint-Token") String endpointToken);
+ 
+     @POST("v1/workwise/qualifications/{user_id}")
+-    Call<qualification> addQualification(
+-            @Path("user_id") int userId,
+-            @Body qualificationInput qualification,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<qualification> addQualification(@Path("user_id") int userId,
++                                         @Body qualificationInput qualification,
++                                         @Header("X-Endpoint-Token") String endpointToken);
+ 
+     @PUT("v1/workwise/qualifications/{user_id}/{qualification_id}")
+-    Call<qualification> updateQualification(
+-            @Path("user_id") int userId,
+-            @Path("qualification_id") int qualificationId,
+-            @Body qualificationInput qualification,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<qualification> updateQualification(@Path("user_id") int userId,
++                                            @Path("qualification_id") int qualificationId,
++                                            @Body qualificationInput qualification,
++                                            @Header("X-Endpoint-Token") String endpointToken);
+ 
+     @DELETE("v1/workwise/qualifications/{user_id}/{qualification_id}")
+-    Call<apiResponse> deleteQualification(
+-            @Path("user_id") int userId,
+-            @Path("qualification_id") int qualificationId,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<apiResponse> deleteQualification(@Path("user_id") int userId,
++                                          @Path("qualification_id") int qualificationId,
++                                          @Header("X-Endpoint-Token") String endpointToken);
+ 
++    // ========== STATS ==========
+     @GET("v1/workwise/stats/{user_id}")
+-    Call<userStats> getStats(
+-            @Path("user_id") int userId,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<userStats> getStats(@Path("user_id") int userId,
++                             @Header("X-Endpoint-Token") String endpointToken);
+ 
++    // ========== SAVED JOBS ==========
+     @GET("v1/workwise/saved-jobs/{user_id}")
+-    Call<List<savedJobs>> getSavedJobs(
+-            @Path("user_id") int userId,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<List<savedJobs>> getSavedJobs(@Path("user_id") int userId,
++                                       @Header("X-Endpoint-Token") String endpointToken);
+ 
+     @POST("v1/workwise/saved-jobs/{user_id}")
+-    Call<savedJobs> addSavedJob(
+-            @Path("user_id") int userId,
+-            @Body savedJobInput job,
+-            @Header("X-Endpoint-Token") String endpointToken
+-    );
++    Call<savedJobs> addSavedJob(@Path("user_id") int userId,
++                                @Body savedJobInput job,
++                                @Header("X-Endpoint-Token") String endpointToken);
+ 
+     @DELETE("v1/workwise/saved-jobs/{user_id}/{saved_job_id}")
+-    Call<apiResponse> deleteSavedJob(
+-            @Path("user_id") int userId,
+-            @Path("saved_job_id") int savedJobId,
+-            @Header("X-Entertainment-Token") String endpointToken
+-    );
++    Call<apiResponse> deleteSavedJob(@Path("user_id") int userId,
++                                     @Path("saved_job_id") int savedJobId,
++                                     @Header("X-Entertainment-Token") String endpointToken);
+ 
++    // ========== JOBS ==========
+     @GET("/v1/workwise/jobs")
+     Call<List<job>> getJobs(
+             @Header("X-Endpoint-Token") String endpointToken,
+@@ -152,51 +119,17 @@
+     );
+ 
+     @POST("v1/workwise/forgot-password")
+-    Call<forgotPasswordOut> forgotPassword(
+-            @Body forgotPasswordIn body,
+-            @Header("X-Endpoint-Token") String endpointToken,
+-            @Header("Accept") String accept
+-    );
++    Call<forgotPasswordOut> forgotPassword(@Body forgotPasswordIn body,
++                                           @Header("X-Endpoint-Token") String endpointToken,
++                                           @Header("Accept") String accept);
+ 
+     @POST("v1/workwise/verify-reset-code")
+-    Call<verifyResetCodeOut> verifyResetCode(
+-            @Body verifyResetCodeIn body,
+-            @Header("X-Endpoint-Token") String endpointToken,
+-            @Header("Accept") String accept
+-    );
++    Call<verifyResetCodeOut> verifyResetCode(@Body verifyResetCodeIn body,
++                                             @Header("X-Endpoint-Token") String endpointToken,
++                                             @Header("Accept") String accept);
+ 
+     @POST("v1/workwise/reset-password")
+-    Call<resetPasswordOut> resetPassword(
+-            @Body resetPasswordIn body,
+-            @Header("X-Endpoint-Token") String endpointToken,
+-            @Header("Accept") String accept
+-    );
+-
+-    @POST("/v1/workwise/chats")
+-    Call<ConversationOut> createChat(
+-            @Header("X-Endpoint-Token") String tok,
+-            @Body ConversationCreateIn body
+-    );
+-
+-    @GET("/v1/workwise/chats/{userId}")
+-    Call<List<ConversationOut>> listChats(
+-            @Header("X-Endpoint-Token") String tok,
+-            @Path("userId") int userId
+-    );
+-
+-    @GET("/v1/workwise/chats/{conversationId}/messages")
+-    Call<List<MessageOut>> getMessages(
+-            @Header("X-Endpoint-Token") String tok,
+-            @Path("conversationId") int conversationId,
+-            @Query("limit") int limit,
+-            @Query("before") Integer before
+-    );
+-
+-    @POST("/v1/workwise/chats/{conversationId}/messages")
+-    Call<MessageOut> sendMessage(
+-            @Header("X-Endpoint-Token") String tok,
+-            @Path("conversationId") int conversationId,
+-            @Body MessageSendIn body
+-    );
+-
++    Call<resetPasswordOut> resetPassword(@Body resetPasswordIn body,
++                                         @Header("X-Endpoint-Token") String endpointToken,
++                                         @Header("Accept") String accept);
+ }
+\ No newline at end of file

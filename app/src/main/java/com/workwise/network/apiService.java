@@ -43,7 +43,6 @@ public interface apiService {
                                        @Body UpdateProfileIn body,
                                        @Header("X-Endpoint-Token") String endpointToken);
 
-    // --- FIXED: URL now includes {user_id} and uses @Path ---
     @Multipart
     @POST("v1/workwise/profile/{user_id}/image")
     Call<ProfileImageUploadResponse> uploadProfileImage(
@@ -121,29 +120,23 @@ public interface apiService {
             @Header("X-Endpoint-Token") String token,
             @Query("limit") int limit,
             @Query("offset") int offset,
-            @Query("employment_type") String employmentType, // New
-            @Query("work_arrangement") String workArrangement, // New
-            @Query("location") String location // New
+            @Query("employment_type") String employmentType,
+            @Query("work_arrangement") String workArrangement,
+            @Query("location") String location
     );
 
-    // --- THIS DUPLICATE METHOD WAS REMOVED ---
-    // @GET("v1/workwise/jobs/search")
-    // Call<List<JobListingResponse>> searchJobs( ... );
-    // --- END REMOVAL ---
-
+    // This is the correct, documented endpoint for job details
     @GET("v1/workwise/jobs/detail/{job_id}")
     Call<JobDetailResponse> getJobDetail(
             @Header("X-Endpoint-Token") String token,
             @Path("job_id") int jobId
     );
 
-    @GET("/v1/workwise/jobs/{job_id}")
-    Call<job> getJobById(
-            @Header("X-Endpoint-Token") String endpointToken,
-            @Path("job_id") int jobId
-    );
+    // --- THIS DUPLICATE METHOD WAS REMOVED ---
+    // @GET("/v1/workwise/jobs/{job_id}")
+    // Call<job> getJobById( ... );
 
-    // FOR THE 'JOB SEARCH' PAGE - This is the correct definition
+    // FOR THE 'JOB SEARCH' PAGE
     @GET("v1/workwise/jobs/search")
     Call<List<job>> searchJobs(
             @Header("X-Endpoint-Token") String token,
@@ -193,6 +186,4 @@ public interface apiService {
     Call<MessageOut> sendMessage(@Header("X-Endpoint-Token") String endpointToken,
                                  @Path("conversation_id") int conversationId,
                                  @Body MessageSendIn message);
-
-
 }

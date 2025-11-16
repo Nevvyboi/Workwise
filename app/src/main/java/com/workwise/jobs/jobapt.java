@@ -2,6 +2,7 @@ package com.workwise.jobs;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,23 +11,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
 import com.workwise.R;
+import com.workwise.models.apiResponse;
 import com.workwise.models.job;
 import com.workwise.models.savedJobInput;
+import com.workwise.models.savedJobs;
 import com.workwise.network.apiClient;
 import com.workwise.network.apiConfig;
 import com.workwise.network.apiService;
-import com.workwise.models.savedJobs;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -37,42 +37,88 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
     private final List<job> jobs;
     private final Map<Integer, Float> jobDistances;
     private final Context context;
-    private final Set<Integer> savedJobIds; // Track which jobs are bookmarked
     private final SharedPreferences prefs;
+    private final int userId;
+    private final apiService api;
+
+    // --- START FIX ---
+    // This is a workaround for the backend design.
+    // We cannot link by JobID, so we link by a composite key of "Title+Company".
+    // Map<"Title+Company", SavedJobID>
+    private final Map<String, Integer> savedJobMap = new HashMap<>();
+    // --- END FIX ---
 
     public jobapt(List<job> jobs, Map<Integer, Float> jobDistances, Context context) {
         this.jobs = jobs;
         this.jobDistances = jobDistances;
         this.context = context;
-        this.savedJobIds = new HashSet<>();
         this.prefs = context.getSharedPreferences("WorkWisePrefs", Context.MODE_PRIVATE);
-        loadSavedJobIds();
+        this.userId = prefs.getInt("user_id", -1);
+        this.api = apiClient.get().create(apiService.class);
+
+        loadSavedJobMap();
     }
 
-    // Method to update the job list (for search)
     public void updateJobs(List<job> newJobs) {
         this.jobs.clear();
         this.jobs.addAll(newJobs);
-        notifyDataSetChanged();
+        loadSavedJobMap();
     }
 
-    private void loadSavedJobIds() {
-        Set<String> savedIds = prefs.getStringSet("saved_job_ids", new HashSet<>());
-        for (String id : savedIds) {
-            try {
-                savedJobIds.add(Integer.parseInt(id));
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
+    /**
+     * Creates a unique key for a job based on its title and company.
+     * This is used to map saved jobs since the backend doesn't link them by JobID.
+     */
+    private String getJobKey(String title, String company) {
+        // Use "::" as a separator to prevent "TitleA" + "CompanyB" being the same as "Title" + "ACompanyB"
+        return (title != null ? title : "") + "::" + (company != null ? company : "");
+    }
+
+    private String getJobKey(job job) {
+        return getJobKey(job.getJobTitle(), job.getCompanyName());
+    }
+
+    private String getJobKey(savedJobs savedJob) {
+        // *** ASSUMPTION ***
+        // This assumes your 'savedJobs' model has getJobTitle() and getCompanyName()
+        // If these methods are named differently, you MUST change them here.
+        return getJobKey(savedJob.getJobTitle(), savedJob.getCompanyName());
+    }
+
+    /**
+     * Fetches the user's saved jobs and populates the savedJobMap.
+     */
+    private void loadSavedJobMap() {
+        if (userId == -1) return; // Not logged in
+
+        api.getSavedJobs(userId, apiConfig.tokenSavedList).enqueue(new Callback<List<savedJobs>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<savedJobs>> call, @NonNull Response<List<savedJobs>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    savedJobMap.clear();
+                    for (savedJobs savedJob : response.body()) {
+                        // --- START FIX (Line 87, 88) ---
+                        // We use the composite key instead of the non-existent getJobId()
+                        // *** ASSUMPTION ***
+                        // This assumes your 'savedJobs' model has getSavedJobId()
+                        // If your model has different method names, change them here.
+                        try {
+                            String key = getJobKey(savedJob);
+                            savedJobMap.put(key, savedJob.getSavedJobId());
+                        } catch (Exception e) {
+                            Log.e("jobapt", "Error processing saved job. Does it have getJobTitle() and getSavedJobId()?", e);
+                        }
+                        // --- END FIX ---
+                    }
+                    notifyDataSetChanged();
+                }
             }
-        }
-    }
 
-    private void saveSavedJobIds() {
-        Set<String> savedIds = new HashSet<>();
-        for (Integer id : savedJobIds) {
-            savedIds.add(String.valueOf(id));
-        }
-        prefs.edit().putStringSet("saved_job_ids", savedIds).apply();
+            @Override
+            public void onFailure(@NonNull Call<List<savedJobs>> call, @NonNull Throwable t) {
+                Log.e("jobapt", "Failed to load saved jobs map: " + t.getMessage());
+            }
+        });
     }
 
     @NonNull
@@ -88,12 +134,12 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
         job job = jobs.get(position);
         if (job == null) return;
 
+        // Your new job.java file fixes these two lines:
         holder.jobTitle.setText(job.getJobTitle());
         holder.companyName.setText(job.getCompanyName());
         holder.jobLocation.setText(job.getJobLocation() != null ? job.getJobLocation() : "N/A");
         holder.salaryRange.setText(job.getSalaryRange() != null ? job.getSalaryRange() : "N/A");
 
-        // Bind Employment Type
         String employmentType = job.getEmploymentType();
         if (employmentType != null && !employmentType.isEmpty()) {
             holder.jobType.setText(employmentType);
@@ -102,7 +148,6 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
             holder.jobTypeCard.setVisibility(View.GONE);
         }
 
-        // Bind Work Arrangement
         String workArrangement = job.getWorkArrangement();
         if (workArrangement != null && !workArrangement.isEmpty()) {
             holder.workArrangement.setText(workArrangement);
@@ -111,17 +156,13 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
             holder.workArrangementCard.setVisibility(View.GONE);
         }
 
-        // Bind Posted Time (FIXED: was getPostedAt)
         String postedTime = job.getDatePosted();
-        if(postedTime != null && !postedTime.isEmpty()) {
-            // This is a basic format, you can add a "time ago" function later
+        if(postedTime != null && !postedTime.isEmpty() && postedTime.length() >= 10) {
             holder.postedTime.setText(postedTime.substring(0, 10));
         } else {
             holder.postedTime.setText("Recently");
         }
 
-
-        // Bind distance
         Float distance = jobDistances.get(job.getJobId());
         if (distance != null) {
             if (distance < 1.0f) {
@@ -136,14 +177,28 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
             holder.distanceCard.setVisibility(View.GONE);
         }
 
-        // Set bookmark icon state
-        boolean isSaved = savedJobIds.contains(job.getJobId());
+        // --- START FIX ---
+        // We now check for the job's key in the map
+        String jobKey = getJobKey(job);
+        boolean isSaved = savedJobMap.containsKey(jobKey);
         updateBookmarkIcon(holder.bookmarkButton, isSaved);
+        // --- END FIX ---
 
         holder.bookmarkButton.setOnClickListener(v -> {
-            boolean currentlySaved = savedJobIds.contains(job.getJobId());
+            if (userId == -1) {
+                Toast.makeText(context, "Please login to save jobs", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // We use the same key to check
+            String key = getJobKey(job);
+            boolean currentlySaved = savedJobMap.containsKey(key);
+
             if (currentlySaved) {
-                unsaveJob(job, holder.bookmarkButton);
+                Integer savedJobId = savedJobMap.get(key);
+                if (savedJobId != null) {
+                    unsaveJob(key, savedJobId, holder.bookmarkButton);
+                }
             } else {
                 saveJob(job, holder.bookmarkButton);
             }
@@ -151,12 +206,9 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
     }
 
     private void saveJob(job job, ImageView bookmarkButton) {
-        int userId = prefs.getInt("user_id", -1);
-        if (userId == -1) {
-            Toast.makeText(context, "Please login to save jobs", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
+        // --- START FIX (Line 196) ---
+        // The constructor only takes 5 arguments, so we only pass 5.
         savedJobInput input = new savedJobInput(
                 job.getJobTitle(),
                 job.getCompanyName(),
@@ -164,18 +216,32 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
                 job.getSalaryRange(),
                 job.getDescription()
         );
+        // --- END FIX ---
 
-        apiService api = apiClient.get().create(apiService.class);
         Call<savedJobs> call = api.addSavedJob(userId, input, apiConfig.tokenSavedAdd);
 
         call.enqueue(new Callback<savedJobs>() {
             @Override
             public void onResponse(@NonNull Call<savedJobs> call, @NonNull Response<savedJobs> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    savedJobIds.add(job.getJobId());
-                    saveSavedJobIds();
-                    updateBookmarkIcon(bookmarkButton, true);
-                    Toast.makeText(context, "Job saved!", Toast.LENGTH_SHORT).show();
+                    savedJobs newSavedJob = response.body();
+
+                    // --- START FIX (Line 208) ---
+                    // We can't use newSavedJob.getJobId(), so we build the key
+                    // from the new object's title and company.
+                    // *** ASSUMPTION ***
+                    // Assumes newSavedJob has getJobTitle(), getCompanyName(), getSavedJobId()
+                    try {
+                        String key = getJobKey(newSavedJob);
+                        savedJobMap.put(key, newSavedJob.getSavedJobId());
+                        updateBookmarkIcon(bookmarkButton, true);
+                        Toast.makeText(context, "Job saved!", Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(context, "Failed to save job (response error)", Toast.LENGTH_SHORT).show();
+                        Log.e("jobapt", "Error processing save response. Does savedJobs model have correct getters?", e);
+                    }
+                    // --- END FIX ---
+
                 } else {
                     Toast.makeText(context, "Failed to save job", Toast.LENGTH_SHORT).show();
                 }
@@ -187,16 +253,26 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
         });
     }
 
-    private void unsaveJob(job job, ImageView bookmarkButton) {
-        int userId = prefs.getInt("user_id", -1);
-        if (userId == -1) return;
+    private void unsaveJob(String jobKey, int savedJobId, ImageView bookmarkButton) {
+        Call<apiResponse> call = api.deleteSavedJob(userId, savedJobId, apiConfig.tokenSavedDelete);
 
-        // Note: This only removes locally. You need a "deleteSavedJob" API call
-        // that takes the 'job.getJobId()' to properly delete from server.
-        savedJobIds.remove(job.getJobId());
-        saveSavedJobIds();
-        updateBookmarkIcon(bookmarkButton, false);
-        Toast.makeText(context, "Job removed from saved", Toast.LENGTH_SHORT).show();
+        call.enqueue(new Callback<apiResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<apiResponse> call, @NonNull Response<apiResponse> response) {
+                if (response.isSuccessful()) {
+                    // Remove the job from our map using its key
+                    savedJobMap.remove(jobKey);
+                    updateBookmarkIcon(bookmarkButton, false);
+                    Toast.makeText(context, "Job removed from saved", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, "Failed to remove job", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<apiResponse> call, @NonNull Throwable t) {
+                Toast.makeText(context, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void updateBookmarkIcon(ImageView bookmarkButton, boolean isSaved) {
@@ -230,8 +306,6 @@ public class jobapt extends RecyclerView.Adapter<jobapt.JobViewHolder> {
             postedTime = itemView.findViewById(R.id.tv_posted_time);
             distance = itemView.findViewById(R.id.tv_distance);
             bookmarkButton = itemView.findViewById(R.id.bookmarkButton);
-
-            // Bind new views
             workArrangement = itemView.findViewById(R.id.tv_work_arrangement);
             workArrangementCard = itemView.findViewById(R.id.workArrangementCard);
             distanceCard = itemView.findViewById(R.id.distanceCard);
