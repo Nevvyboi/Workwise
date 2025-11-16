@@ -168,17 +168,8 @@ public class verifyResetCode extends AppCompatActivity {
 
     private void verifyCode() {
         String code = text(inputCode);
-
-        // Clear previous errors
-        if (codeLayout != null) {
-            codeLayout.setError(null);
-        }
-
-        // Validate code
         if (code.length() != 6) {
-            if (codeLayout != null) {
-                codeLayout.setError("Please enter the 6-digit code");
-            }
+            codeLayout.setError("Please enter the 6-digit code");
             return;
         }
 
@@ -186,27 +177,23 @@ public class verifyResetCode extends AppCompatActivity {
 
         verifyResetCodeIn body = new verifyResetCodeIn(email, code);
 
-        api.verifyResetCode(body, apiConfig.tokenVerifyResetCode, "application/json")
+        api.verifyResetCode(apiConfig.tokenVerifyResetCode, body)
                 .enqueue(new Callback<verifyResetCodeOut>() {
                     @Override
-                    public void onResponse(Call<verifyResetCodeOut> call, Response<verifyResetCodeOut> res) {
+                    public void onResponse(Call<verifyResetCodeOut> call,
+                                           Response<verifyResetCodeOut> res) {
                         setLoading(false);
+
                         if (res.isSuccessful() && res.body() != null) {
-                            verifyResetCodeOut data = res.body();
-                            
-                            if (data.valid) {
-                                // Navigate to reset password screen
+                            if (res.body().valid) {
                                 Intent intent = new Intent(verifyResetCode.this, resetPassword.class);
                                 intent.putExtra("email", email);
                                 intent.putExtra("code", code);
                                 startActivity(intent);
                                 finish();
                             } else {
-                                if (codeLayout != null) {
-                                    codeLayout.setError("Invalid or expired code");
-                                }
+                                codeLayout.setError("Invalid or expired code");
                             }
-                            
                         } else {
                             handleHttpError(res);
                         }
