@@ -101,6 +101,20 @@
                     android:nestedScrollingEnabled="false"
                     tools:listitem="@layout/itemjobcard" />
 
+                <TextView
+                    android:id="@+id/emptyStateText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="48dp"
+                    android:paddingBottom="48dp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:textAlignment="center"
+                    android:textColor="#6D7A88"
+                    android:textSize="16sp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    tools:text="No jobs found in your area. Try expanding your search." />
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 

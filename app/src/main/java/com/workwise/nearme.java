@@ -1,7 +1,5 @@
 package com.workwise;
 
-import static java.lang.Math.E;
-
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.content.pm.PackageManager;
@@ -12,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,9 +26,9 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -59,22 +58,21 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
     private FusedLocationProviderClient fusedLocationClient;
     private Location userLocation;
     private Geocoder geocoder;
-    // --- 1. REMOVED userLocality VARIABLE ---
 
     private ChipGroup filterGroup;
-    private Chip chipAll, chipFull, chipPart, chipContract, chipRemote;
+    private Chip chipAll;
     private RecyclerView rvJobs;
+    private TextView emptyStateText;
 
     private jobapt jobsAdapter;
     private final List<job> allJobs = new ArrayList<>();
     private final List<job> visibleJobs = new ArrayList<>();
-
     private final Map<Integer, Float> jobDistances = new HashMap<>();
 
-    private static final int JOB_LIMIT = 100; // Get up to 100 jobs
+    // Increased limit to show more jobs
+    private static final int JOB_LIMIT = 100;
     private static final int LOCATION_PERMISSION_REQUEST = 1001;
 
-    // ... (rest of your variables are unchanged) ...
     private View loadingOverlay;
     private View pulseCircle;
     private View permissionPrompt;
@@ -83,7 +81,6 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
     private ObjectAnimator pulseAnimator;
     private boolean isMapReady = false;
     private boolean areJobsLoaded = false;
-    private boolean permissionGranted = false;
 
     @Override
     protected String getCurrentNavItem() {
@@ -104,21 +101,25 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         setupPermissionPrompt();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Start the loading process
+        initDataLoading();
+    }
+
     // ================== INIT ==================
 
     private void initViews() {
         filterGroup = findViewById(R.id.filterGroup);
         chipAll = findViewById(R.id.chipAll);
-        chipFull = findViewById(R.id.chipFull);
-        chipPart = findViewById(R.id.chipPart);
-        chipContract = findViewById(R.id.chipContract);
-        chipRemote = findViewById(R.id.chipRemote);
         rvJobs = findViewById(R.id.rvJobs);
         loadingOverlay = findViewById(R.id.loadingOverlay);
         pulseCircle = findViewById(R.id.pulseCircle);
         permissionPrompt = findViewById(R.id.permissionPrompt);
         allowLocationButton = findViewById(R.id.allowLocationButton);
         continueWithoutButton = findViewById(R.id.continueWithoutButton);
+        emptyStateText = findViewById(R.id.emptyStateText);
     }
 
     private void setupRecycler() {
@@ -152,29 +153,47 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         });
     }
 
-    // ================== PERMISSION HANDLING ==================
+    // ================== PERMISSION & LOADING FLOW ==================
 
     private boolean checkLocationPermission() {
         return ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    /**
+     * This is the main entry point for loading all data.
+     * It's called from onResume.
+     */
+    private void initDataLoading() {
+        // Always set up the map
+        setupMap();
+        showLoading(); // Show loading overlay
+        areJobsLoaded = false;
+
+        if (checkLocationPermission()) {
+            permissionPrompt.setVisibility(View.GONE);
+            // Get location *first*, then load all jobs
+            getUserLocationAndLoadJobs();
+        } else {
+            // Show the permission prompt
+            permissionPrompt.setVisibility(View.VISIBLE);
+            permissionPrompt.setAlpha(1f);
+            showEmptyState("Grant location to see jobs near you");
+            // Load all jobs anyway, but without distances
+            loadAllJobsFromApi();
+        }
+    }
+
     private void setupPermissionPrompt() {
         if (allowLocationButton != null) {
-            allowLocationButton.setOnClickListener(v -> {
-                if (checkLocationPermission()) {
-                    Toast.makeText(this, "Location access already enabled", Toast.LENGTH_SHORT).show();
-                    hidePermissionPrompt();
-                    startLoading();
-                } else {
-                    requestLocationPermission();
-                }
-            });
+            allowLocationButton.setOnClickListener(v -> requestLocationPermission());
         }
+
         if (continueWithoutButton != null) {
             continueWithoutButton.setOnClickListener(v -> {
                 hidePermissionPrompt();
-                startLoadingWithoutLocation();
+                // Jobs will load (from initDataLoading), just without location.
+                Toast.makeText(this, "Showing all jobs, unsorted by distance", Toast.LENGTH_SHORT).show();
             });
         }
     }
@@ -198,16 +217,13 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
                 Manifest.permission.ACCESS_FINE_LOCATION)) {
             new AlertDialog.Builder(this)
                     .setTitle("Location Permission Needed")
-                    .setMessage("WorkWise needs your location to show jobs near you and calculate distances. This helps you find the closest opportunities.")
+                    .setMessage("WorkWise needs your location to sort jobs by distance.")
                     .setPositiveButton("Grant Permission", (dialog, which) -> {
                         ActivityCompat.requestPermissions(this,
                                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                                 LOCATION_PERMISSION_REQUEST);
                     })
-                    .setNegativeButton("Not Now", (dialog, which) -> {
-                        hidePermissionPrompt();
-                        startLoadingWithoutLocation();
-                    })
+                    .setNegativeButton("Not Now", null)
                     .show();
         } else {
             ActivityCompat.requestPermissions(this,
@@ -222,35 +238,19 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                permissionGranted = true;
                 Toast.makeText(this, "✓ Location access enabled", Toast.LENGTH_SHORT).show();
                 hidePermissionPrompt();
-                startLoading();
+                // Now that we have permission, get location and re-process jobs
+                getUserLocationAndLoadJobs();
             } else {
-                Toast.makeText(this, "Location permission denied. Showing all jobs.",
-                        Toast.LENGTH_LONG).show();
-                hidePermissionPrompt();
-                startLoadingWithoutLocation();
+                Toast.makeText(this, "Location permission denied.", Toast.LENGTH_LONG).show();
             }
         }
     }
 
-    // ================== LOADING INITIALIZATION ==================
-
-    private void startLoading() {
-        showLoading();
-        setupMap();
-        getUserLocation(); // This will get GPS coordinates
-        loadJobsFromApi(); // This will load ALL jobs
-    }
-
-    private void startLoadingWithoutLocation() {
-        showLoading();
-        setupMap();
-        loadJobsFromApi(); // This will load ALL jobs
-    }
-
     private void setupMap() {
+        // Avoid re-creating the fragment if map is already ready
+        if (isMapReady) return;
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
         getSupportFragmentManager()
                 .beginTransaction()
@@ -264,6 +264,7 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
     private void showLoading() {
         if (loadingOverlay != null) {
             loadingOverlay.setVisibility(View.VISIBLE);
+            loadingOverlay.setAlpha(1f);
             startPulseAnimation();
         }
     }
@@ -277,7 +278,6 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
                     .withEndAction(() -> {
                         if (loadingOverlay != null) {
                             loadingOverlay.setVisibility(View.GONE);
-                            loadingOverlay.setAlpha(1f);
                         }
                     })
                     .start();
@@ -290,12 +290,10 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
             pulseAnimator.setDuration(1500);
             pulseAnimator.setRepeatCount(ObjectAnimator.INFINITE);
             pulseAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-
             ObjectAnimator scaleY = ObjectAnimator.ofFloat(pulseCircle, "scaleY", 1f, 1.3f, 1f);
             scaleY.setDuration(1500);
             scaleY.setRepeatCount(ObjectAnimator.INFINITE);
             scaleY.setInterpolator(new AccelerateDecelerateInterpolator());
-
             pulseAnimator.start();
             scaleY.start();
         }
@@ -314,13 +312,12 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         }
     }
 
-    // ================== GET USER LOCATION ==================
+    // ================== CORE LOGIC: GET LOCATION & JOBS ==================
 
-    private void getUserLocation() {
+    private void getUserLocationAndLoadJobs() {
         if (!checkLocationPermission()) {
-            return;
-        }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // No permission, just load jobs without location
+            loadAllJobsFromApi();
             return;
         }
 
@@ -329,22 +326,74 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
                     if (location != null) {
                         userLocation = location;
                         updateMapWithUserLocation();
-
-                        // Now that we have location, re-calculate distances
-                        if (!allJobs.isEmpty()) {
-                            calculateDistancesForAllJobs();
-                            // Re-apply filter to sort by new distances
-                            applyFilter(getSelectedFilterKey());
-                        }
-
                     } else {
-                        Toast.makeText(this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Could not get location. Sorting may be unavailable.", Toast.LENGTH_LONG).show();
                     }
+                    // ALWAYS load jobs, even if location is null
+                    loadAllJobsFromApi();
                 })
                 .addOnFailureListener(e -> {
-                    // *** THIS IS THE FIXED LINE ***
-                    Toast.makeText(this, "Error getting location: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e("NearMe", "Error getting location: " + e.getMessage());
+                    // ALWAYS load jobs, even if location failed
+                    loadAllJobsFromApi();
                 });
+    }
+
+
+    /**
+     * Fetches ALL jobs from the API.
+     */
+    private void loadAllJobsFromApi() {
+        apiService api = apiClient.get().create(apiService.class);
+
+        // *** THIS IS THE KEY CHANGE ***
+        // We pass 'null' for location to get ALL jobs
+        Call<List<job>> call = api.getActiveJobs(
+                apiConfig.tokenJobsList,
+                JOB_LIMIT,
+                0,
+                null, // No employment type filter
+                null, // No work arrangement filter
+                null  // <-- 'null' location means get all jobs
+        );
+
+        call.enqueue(new Callback<List<job>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<job>> call,
+                                   @NonNull Response<List<job>> response) {
+                areJobsLoaded = true;
+                checkAndHideLoading();
+
+                if (!response.isSuccessful()) {
+                    showEmptyState("Failed to load jobs: " + response.code());
+                    return;
+                }
+
+                if (response.body() == null || response.body().isEmpty()) {
+                    showEmptyState("No jobs found");
+                    return;
+                }
+
+                allJobs.clear();
+                allJobs.addAll(response.body());
+
+                // We have the jobs, now calculate distances (if we have location)
+                if (userLocation != null) {
+                    calculateDistancesForAllJobs();
+                }
+
+                // Apply default filter ("ALL") which will also sort by distance
+                applyFilter("ALL");
+                showRecycler();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<job>> call, @NonNull Throwable t) {
+                areJobsLoaded = true;
+                checkAndHideLoading();
+                showEmptyState("Network error loading jobs: " + t.getMessage());
+            }
+        });
     }
 
     // ================== MAP CALLBACK ==================
@@ -353,11 +402,11 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
     public void onMapReady(@NonNull GoogleMap googleMap) {
         this.map = googleMap;
 
-        if (checkLocationPermission() && ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (checkLocationPermission()) {
             map.setMyLocationEnabled(true);
         }
 
+        // Default to South Africa
         LatLng southAfrica = new LatLng(-28.4793, 24.6727);
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(southAfrica, 5f));
 
@@ -374,83 +423,26 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
             LatLng userLatLng = new LatLng(userLocation.getLatitude(),
                     userLocation.getLongitude());
 
+            map.clear(); // Clear old markers
             map.addMarker(new MarkerOptions()
                     .position(userLatLng)
                     .title("You are here")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f));
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 10f));
         }
     }
 
-    // ================== API: LOAD JOBS ==================
-
-    private void loadJobsFromApi() {
-        apiService api = apiClient.get().create(apiService.class);
-
-        // --- 3. REMOVED LOCATION FILTER ---
-        // This call now fetches ALL jobs, not just jobs from 'userLocality'
-        Call<List<job>> call = api.getActiveJobs(
-                apiConfig.tokenJobsList,
-                JOB_LIMIT,
-                0,
-                null, // Filters will be applied on the client side
-                null,
-                null  // <-- This is the important change
-        );
-        // --- END CHANGE ---
-
-        call.enqueue(new Callback<List<job>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<job>> call,
-                                   @NonNull Response<List<job>> response) {
-                areJobsLoaded = true;
-
-                if (!response.isSuccessful()) {
-                    checkAndHideLoading();
-                    Toast.makeText(nearme.this, "Failed to load jobs: " + response.code(), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (response.body() == null || response.body().isEmpty()) {
-                    checkAndHideLoading();
-                    Toast.makeText(nearme.this, "No jobs available", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                allJobs.clear();
-                allJobs.addAll(response.body());
-
-                // We have the jobs, now calculate distances if we have location
-                if (userLocation != null) {
-                    calculateDistancesForAllJobs();
-                }
-
-                // Apply default filter ("ALL") which will also sort by distance
-                applyFilter("ALL");
-
-                Toast.makeText(nearme.this, allJobs.size() + " jobs loaded", Toast.LENGTH_SHORT).show();
-                checkAndHideLoading();
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<job>> call, @NonNull Throwable t) {
-                areJobsLoaded = true;
-                checkAndHideLoading();
-                Toast.makeText(nearme.this, "Error loading jobs: " + t.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
-    // ================== DISTANCE CALCULATION ==================
+    // ================== DISTANCE & FILTERING ==================
 
     private void calculateDistancesForAllJobs() {
         if (userLocation == null) return;
+        jobDistances.clear();
 
         for (job j : allJobs) {
             if (j == null || j.getJobLocation() == null) continue;
 
-            // Get coordinates for job location (e.g., "Sandton, Gauteng")
+            // Use Geocoder to get coordinates for the job's location string
             LatLng jobLatLng = getCoordinatesFromAddress(j.getJobLocation());
 
             if (jobLatLng != null) {
@@ -463,22 +455,17 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
                 jobDistances.put(j.getJobId(), distance);
             }
         }
-
-        if (jobsAdapter != null) {
-            jobsAdapter.notifyDataSetChanged();
-        }
     }
 
     private LatLng getCoordinatesFromAddress(String address) {
         try {
-            // Geocoder is not perfect, but it's good for city/suburb names
+            // Geocoder is not perfect, but it's the best we have
             List<Address> addresses = geocoder.getFromLocationName(address, 1);
             if (addresses != null && !addresses.isEmpty()) {
                 Address location = addresses.get(0);
                 return new LatLng(location.getLatitude(), location.getLongitude());
             }
         } catch (IOException e) {
-            // Log the error but don't crash
             Log.e("NearMe", "Geocoder failed for address: " + address, e);
         }
         return null; // Return null if address can't be found
@@ -490,8 +477,6 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
         // Convert meters to kilometers
         return results[0] / 1000f;
     }
-
-    // ================== FILTERING ==================
 
     private String getSelectedFilterKey() {
         int checkedId = filterGroup.getCheckedChipId();
@@ -516,7 +501,6 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
                     : "";
 
             boolean shouldAdd = false;
-
             switch (key) {
                 case "FULL":
                     shouldAdd = type.contains("full");
@@ -535,34 +519,55 @@ public class nearme extends bottomNav implements OnMapReadyCallback {
                     shouldAdd = true;
                     break;
             }
-
             if (shouldAdd) {
                 visibleJobs.add(j);
             }
         }
 
-        // --- 4. THIS SORTING IS NOW THE MOST IMPORTANT PART ---
-        // If we have location, sort the list by distance
+        // Sort the visible list by distance (if available)
         if (userLocation != null && !jobDistances.isEmpty()) {
-            Collections.sort(visibleJobs, new Comparator<job>() {
-                @Override
-                public int compare(job j1, job j2) {
-                    Float dist1 = jobDistances.get(j1.getJobId());
-                    Float dist2 = jobDistances.get(j2.getJobId());
-
-                    // This logic puts jobs with unknown locations (dist1/2 == null)
-                    // at the bottom of the list.
-                    if (dist1 == null && dist2 == null) return 0;
-                    if (dist1 == null) return 1;
-                    if (dist2 == null) return -1;
-
-                    return Float.compare(dist1, dist2); // Sorts closest first
-                }
+            Collections.sort(visibleJobs, (j1, j2) -> {
+                Float dist1 = jobDistances.get(j1.getJobId());
+                Float dist2 = jobDistances.get(j2.getJobId());
+                // Put jobs with no distance at the end
+                if (dist1 == null && dist2 == null) return 0;
+                if (dist1 == null) return 1;
+                if (dist2 == null) return -1;
+                return Float.compare(dist1, dist2); // Sorts closest first
             });
         }
-        // If we don't have location, the list remains sorted by date (from API)
 
         jobsAdapter.notifyDataSetChanged();
+
+        // Handle empty state after filtering
+        if (visibleJobs.isEmpty() && !allJobs.isEmpty()) {
+            showEmptyState("No jobs match the selected filter");
+        } else if (visibleJobs.isEmpty()) {
+            // This case is handled by loadAllJobsFromApi
+        } else {
+            showRecycler();
+        }
+    }
+
+    // ================== UI STATE HELPERS ==================
+
+    private void showEmptyState(String message) {
+        if (emptyStateText != null) {
+            emptyStateText.setText(message);
+            emptyStateText.setVisibility(View.VISIBLE);
+        }
+        if (rvJobs != null) {
+            rvJobs.setVisibility(View.GONE);
+        }
+    }
+
+    private void showRecycler() {
+        if (emptyStateText != null) {
+            emptyStateText.setVisibility(View.GONE);
+        }
+        if (rvJobs != null) {
+            rvJobs.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
