@@ -126,16 +126,10 @@ public interface apiService {
             @Query("location") String location // New
     );
 
-    @GET("v1/workwise/jobs/search")
-    Call<List<JobListingResponse>> searchJobs(
-            @Header("X-Endpoint-Token") String token,
-            @Query("query") String query,
-            @Query("employment_type") String employmentType,
-            @Query("work_arrangement") String workArrangement,
-            @Query("location") String location,
-            @Query("limit") int limit,
-            @Query("offset") int offset
-    );
+    // --- THIS DUPLICATE METHOD WAS REMOVED ---
+    // @GET("v1/workwise/jobs/search")
+    // Call<List<JobListingResponse>> searchJobs( ... );
+    // --- END REMOVAL ---
 
     @GET("v1/workwise/jobs/detail/{job_id}")
     Call<JobDetailResponse> getJobDetail(
@@ -149,7 +143,7 @@ public interface apiService {
             @Path("job_id") int jobId
     );
 
-    // FOR THE 'JOB SEARCH' PAGE
+    // FOR THE 'JOB SEARCH' PAGE - This is the correct definition
     @GET("v1/workwise/jobs/search")
     Call<List<job>> searchJobs(
             @Header("X-Endpoint-Token") String token,
