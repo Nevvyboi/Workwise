@@ -146,16 +146,21 @@ Workwise does not talk to a database directly. Every screen goes through
 **[WorkwiseWeb](https://github.com/Nevvyboi/WorkwiseWeb)**, a FastAPI service that owns
 authentication, profiles, CV storage, qualifications, job listings, saved jobs and chat.
 
-```java
-// app/src/main/java/com/workwise/network/apiConfig.java
-public static final String baseUrl = "https://workwiseweb-production.up.railway.app/";
+There is no hosted instance any more, so **run the backend yourself** and point the app at it.
+Both settings live in `local.properties`, which is gitignored:
+
+```properties
+# local.properties
+apiBaseUrl=http://10.0.2.2:8000/     # 10.0.2.2 is the host machine, seen from the emulator
+apiToken=your-shared-endpoint-token   # must match WORKWISE_ENDPOINT_TOKEN on the backend
+mapsApiKey=your-google-maps-key       # optional, only the map needs it
 ```
 
-Point that at your own deployment (or `http://10.0.2.2:8000/` for a backend running on the host
-machine while you use the emulator) to develop against a local API.
+`build.gradle.kts` reads those into `BuildConfig` and `apiConfig` exposes them, so no URL or
+secret is ever compiled in from source control. Copy `local.properties.example` to get started.
 
-Each endpoint is authorised with a static token sent as an `X-Endpoint-Token` header, one per
-route. See [Security Notes](#-security-notes) before reusing this pattern.
+Every protected route is authorised with that one shared token, sent as an `X-Endpoint-Token`
+header. See [Security Notes](#-security-notes) before treating it as real authentication.
 
 ---
 
@@ -194,8 +199,9 @@ To install it straight onto a connected device:
 ./gradlew installDebug
 ```
 
-The app points at the live WorkwiseWeb deployment out of the box, so you can register an account
-and use it immediately without standing up a backend.
+Before the app can do anything useful it needs a backend. Start
+[WorkwiseWeb](https://github.com/Nevvyboi/WorkwiseWeb) locally, put its token and URL in
+`local.properties` as shown above, and then register an account from the app.
 
 ---
 
@@ -234,18 +240,18 @@ Workwise/
 
 Being straight about this, because it is a student project and the code is public:
 
-* **The endpoint tokens are in the repo.** `apiConfig.java` holds a static token per route and the
-  backend checks them via an `X-Endpoint-Token` header. Anyone reading this repo has them. They are
-  a routing convenience, not authentication. A production build wants per user credentials, a
-  session token issued at login, and the shared constants out of source control.
-* **A Google Maps API key is committed** in `app/src/main/res/values/strings.xml`. The damage is
-  limited because the key is already restricted to this package name and a specific signing
-  certificate, so a copy of it will not work from anyone else's build (a debug build of this repo
-  fails Maps authorisation, which is the restriction doing its job). Still worth moving out of
-  source control on the next pass, with the Secrets Gradle Plugin, and if you fork this you need
-  your own key restricted to your own certificate.
+* **No secrets live in this repository.** The base URL, the endpoint token and the Maps key all come
+  from `local.properties` (or matching environment variables) through `BuildConfig`. An earlier
+  version of this repo hardcoded all three; those values have been removed and the credentials they
+  referred to were retired.
+* **The shared token is not real authentication.** One token guards every protected route, and it
+  ships inside the APK, so anyone who unpacks a build has it. It keeps casual traffic off the API
+  and nothing more. Real auth means per user credentials and a session token issued at login.
 * **Cleartext traffic is enabled** (`usesCleartextTraffic="true"`) so a local HTTP backend works
   during development. Turn it off before shipping anything.
+* **Git history still holds the old values.** Removing them from the working tree does not remove
+  them from previous commits. They have been retired, so this is tidiness rather than exposure, but
+  keep it in mind before restoring anything from an old commit.
 
 ---
 

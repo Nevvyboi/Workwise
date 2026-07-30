@@ -1,0 +1,19 @@
+# Copy this file to local.properties and fill in your own values.
+# local.properties is gitignored; never commit it.
+
+# Path to your Android SDK (Android Studio writes this automatically).
+#sdk.dir=/path/to/Android/sdk
+
+# Base URL of your WorkwiseWeb backend.
+#   http://10.0.2.2:8000/  reaches localhost on the host machine from the emulator
+#   http://<your-lan-ip>:8000/  for a physical device on the same network
+apiBaseUrl=http://10.0.2.2:8000/
+
+# Shared endpoint token. Must match WORKWISE_ENDPOINT_TOKEN on the backend.
+# Generate one with:  python -c "import secrets; print(secrets.token_urlsafe(24))"
+apiToken=
+
+# Google Maps Android SDK key, used by the "near me" map.
+# Restrict it to this package name and your signing certificate in the
+# Google Cloud console. Leave it blank and the app still runs; the map is blank.
+mapsApiKey=
