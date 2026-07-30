@@ -218,7 +218,7 @@ public class settingsprofile extends AppCompatActivity {
             public void onFailure(Call<UserProfileOut> call, Throwable t) {
                 saveButton.setEnabled(true);
                 saveButton.setText("Save Changes");
-                Toast.makeText(settingsprofile.this, "Network error – using cache", Toast.LENGTH_LONG).show();
+                Toast.makeText(settingsprofile.this, "Network error - using cache", Toast.LENGTH_LONG).show();
                 loadFromSharedPreferences();
             }
         });
