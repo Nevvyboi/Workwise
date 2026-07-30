@@ -50,6 +50,29 @@ thin and the data lives server side.
 
 ## 🎬 The Screens
 
+<p align="center">
+  <img src="docs/screenshots/01-login.png" alt="Login" width="30%" />
+  <img src="docs/screenshots/02-home.png" alt="Home" width="30%" />
+  <img src="docs/screenshots/03-job-search.png" alt="Job search" width="30%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/06-settings.png" alt="Settings" width="30%" />
+  <img src="docs/screenshots/05-community.png" alt="Community" width="30%" />
+  <img src="docs/screenshots/07-skill-assessment.png" alt="Skill assessment" width="30%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/08-cv-tips.png" alt="CV tips" width="30%" />
+  <img src="docs/screenshots/09-interview-tips.png" alt="Interview tips" width="30%" />
+  <img src="docs/screenshots/04-near-me.png" alt="Jobs near me" width="30%" />
+</p>
+
+> 📸 Captured on an Android 16 emulator against the live WorkwiseWeb backend, so the job listings
+> are real data. In the **near me** shot the map panel is blank because the build used for these
+> screenshots is not signed with the release certificate the Maps key is restricted to; on a
+> properly signed build the map renders normally.
+
 Nineteen activities, grouped by what they are for.
 
 ### 🔐 Getting in
@@ -215,9 +238,12 @@ Being straight about this, because it is a student project and the code is publi
   backend checks them via an `X-Endpoint-Token` header. Anyone reading this repo has them. They are
   a routing convenience, not authentication. A production build wants per user credentials, a
   session token issued at login, and the shared constants out of source control.
-* **A Google Maps API key is committed** in `app/src/main/res/values/strings.xml`. If you fork this,
-  swap in your own key, restrict it to your package name and signing certificate in the Google Cloud
-  console, and keep it out of version control (the Secrets Gradle Plugin is the usual way).
+* **A Google Maps API key is committed** in `app/src/main/res/values/strings.xml`. The damage is
+  limited because the key is already restricted to this package name and a specific signing
+  certificate, so a copy of it will not work from anyone else's build (a debug build of this repo
+  fails Maps authorisation, which is the restriction doing its job). Still worth moving out of
+  source control on the next pass, with the Secrets Gradle Plugin, and if you fork this you need
+  your own key restricted to your own certificate.
 * **Cleartext traffic is enabled** (`usesCleartextTraffic="true"`) so a local HTTP backend works
   during development. Turn it off before shipping anything.
 
